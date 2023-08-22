@@ -145,6 +145,51 @@ class FeatureExtraction(nn.Module):
 
         return P1
 
+class FeatureExtraction_MultiOutput(nn.Module):
+    def __init__(self, backbone_name, input_channels, fusion_method="concat"):
+        super(FeatureExtraction_MultiOutput, self).__init__()
+        if fusion_method != "concat":
+            raise("Error! In multi-output, the fusion must be 'concat'.")
+        self.backbone = build_backbone(backbone_name)(input_channels=input_channels)
+        self.conv1 = make_three_conv([512,1024],1024)
+        self.SPP = SpatialPyramidPooling()
+        self.conv2 = make_three_conv([512,1024],2048)
+
+        self.upsample1 = Upsample(512,256)
+        self.fusion1 = FusionModule(512, fusion_method=fusion_method)
+
+        self.upsample2 = Upsample(256,128)
+        self.fusion2 = FusionModule(256, fusion_method=fusion_method)
+
+        self.upsample3 = Upsample(128,64)
+        self.fusion3 = FusionModule(128, fusion_method=fusion_method)
+
+        self.upsample4 = Upsample(64,32)
+        self.fusion4 = FusionModule(64, fusion_method=fusion_method)
+        
+
+    def forward(self, x):
+        #  backbone
+        ## x4 channels = 64, x3 channels = 128, x2 channels = 256, x1 channels = 512, x0 channels = 1024,
+        c5, c4, c3, c2, c1 = self.backbone(x)
+
+        P5 = self.conv1(c1)  # channels = 512
+        P5 = self.SPP(P5)  # channels = 1024
+        P5 = self.conv2(P5)  ## input_size/32  # channels = 512
+
+        P5_upsample = self.upsample1(P5)  # channels = 256
+        P4 = self.fusion1(c2, P5_upsample) # output channels = 256
+
+        P4_upsample = self.upsample2(P4)  # channels = 128
+        P3 = self.fusion2(c3, P4_upsample) # output channels = 128
+
+        P3_upsample = self.upsample3(P3)  # channels = 64
+        P2 = self.fusion3(c4, P3_upsample) # output channels = 64
+
+        P2_upsample = self.upsample4(P2)  # channels = 32
+        P1 = self.fusion4(c5, P2_upsample) # output channels = 32
+
+        return P5, P3, P1
 
 class FeatureExtraction_old(nn.Module):
     def __init__(self, backbone_name, input_channels):
