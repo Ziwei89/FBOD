@@ -47,7 +47,7 @@ if __name__ == "__main__":
                               abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
     Cuda = True
     annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[input_img_num] + "_continuous_difficulty_val.txt"
-    dataset_image_path = "../../FBOD-BSPL/dataset/val/images/"
+    dataset_image_path = opt.data_image_path + "val/"
 
     
     with open(annotation_path) as f:

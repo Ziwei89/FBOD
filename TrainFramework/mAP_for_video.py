@@ -61,8 +61,8 @@ if __name__ == "__main__":
                                 aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
                                 abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
 
-    data_path = opt.data_path
-    label_path = data_path + "FirstStage/raw_data/labels/" #.xlm label file path
+    
+    label_path = opt.data_label_path + "val/" #.xlm label file path
 
     video_path = opt.video_path
     video_name = opt.video_name

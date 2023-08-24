@@ -56,8 +56,7 @@ if __name__ == "__main__":
     model_name=opt.model_name
     
     video_path = opt.video_path
-    data_path = opt.data_path
-    label_path = data_path + "val/labels/" #.xlm label file path
+    label_path = opt.data_label_path + "val/" #.xlm label file path
     label_name_list=os.listdir(label_path)
 
     video_name = opt.video_name

@@ -36,12 +36,15 @@ class opts(object):
         self.parser.add_argument('--Batch_size', default=8, type=int,
                             help='Batch_size: The size of batch.')
         
+        self.parser.add_argument('--data_image_path', default="../../dataset_image/FlyingBird/", type=str,
+                            help='data_image_path: The path of the image in dataset.')
+        
+        self.parser.add_argument('--data_label_path', default="../data/labels/", type=str,
+                            help='data_label_path: The path of the label in dataset.')
+        
         ######### for test
         self.parser.add_argument('--model_name', default="FB_object_detect_model.pth", type=str,
                             help='model_name: The model name for loade.')
-        
-        self.parser.add_argument('--data_path', default="../../FBOD-BSPL/dataset/", type=str,
-                            help='data_path: The dataset path.')
         
         self.parser.add_argument('--video_path', default="../../FBOD-BSPL/dataset/val/videos/", type=str,
                             help='video_path: The video path.')
