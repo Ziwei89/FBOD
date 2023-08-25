@@ -355,10 +355,10 @@ if __name__ == "__main__":
         optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
         
-        train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+        train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num, assign_method=opt.assign_method)
         train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
        
-        val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+        val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num, assign_method=opt.assign_method)
         val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
 
         epoch_size = max(1, num_train//Batch_size)
