@@ -120,7 +120,7 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
                     loss = loss_func(outputs, targets_val)
                 val_loss += loss
 
-                if (epoch+1) >= 40:
+                if (epoch+1) >= 30:
                     label_obj_list = labels_to_results.covert(labels_list, iteration)
                     all_label_obj_list += label_obj_list
 
@@ -130,7 +130,7 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
             pbar.set_postfix(**{'total_loss': val_loss.item() / (iteration + 1)})
             pbar.update(1)
     net.train()
-    if (epoch+1) >= 40:
+    if (epoch+1) >= 30:
         print("here")
         AP_50,REC_50,PRE_50=mean_average_precision(all_obj_result_list,all_label_obj_list,iou_threshold=0.5)
     else:
@@ -152,7 +152,7 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
             print('Saving state, iter:', str(epoch+1))
             torch.save(model.state_dict(), save_model_dir + 'Epoch%d-Total_Loss%.4f-Val_Loss%.4f-AP_50_%.4f.pth'%((epoch+1),total_loss/(epoch_size+1),val_loss/(epoch_size_val+1),AP_50))
             torch.save(model.state_dict(), save_model_dir + 'FB_object_detect_model.pth')
-    if (epoch+1) >= 40:
+    if (epoch+1) >= 30:
         return total_loss/(epoch_size+1), val_loss/(epoch_size_val+1), largest_AP_50, AP_50
     else:
         return total_loss/(epoch_size+1), val_loss/(epoch_size_val+1), largest_AP_50, 0.80
@@ -194,7 +194,7 @@ def draw_curve_ap50(epoch, ap_50, pic_name):
 
     x_ap50_epoch.append(int(epoch))
     ax1.plot(x_ap50_epoch, record_ap50['AP_50'], 'g', label='AP_50')
-    if epoch == 40:
+    if epoch == 30:
         ax1.legend()
     fig_ap50.savefig(pic_name)
 #############################################################################
@@ -375,6 +375,6 @@ if __name__ == "__main__":
             largest_AP_50 = largest_AP_50_record
             if (epoch+1)>=2:
                 draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
-            if (epoch+1)>=40:
+            if (epoch+1)>=30:
                 draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
             lr_scheduler.step()
