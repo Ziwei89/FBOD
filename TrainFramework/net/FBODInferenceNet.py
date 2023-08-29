@@ -65,7 +65,7 @@ class FBODInferenceBody_MultiScale(nn.Module):
                        backbone_name="cspdarknet53", fusion_method="concat"): ### Extract parameters. input_channels equal to aggregation_output_channels.
         super(FBODInferenceBody_MultiScale, self).__init__()
         """
-        aggregation_method: "multiinput" or "convlstm". "multiinput" means MultiInput, and "convlstm" means ConvLSTM.
+        # aggregaton_method: "multiinput" , "relatedatten" or "convlstm". "multiinput" means MultiInput, "relatedatten" means RelatedAtten, and "convlstm" means ConvLSTM.
         input_mode:         "RGB" or "GRG". "RGB" means all the image is rgb mode. "GRG" means that the middle image remains RGB,
                              and the others will be coverted to gray.
         backbone_name:      "cspdarknet53" or "mobilenetv2".
