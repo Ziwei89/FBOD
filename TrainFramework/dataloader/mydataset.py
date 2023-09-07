@@ -414,7 +414,8 @@ if __name__ == '__main__':
     image_size = (672,384)
     input_mode = "RGR"
     continues_num=5
-    dataset_image_path = "../../../FBOD-BSPL/dataset/train/images/"
+    assign_method="binary_assign"
+    dataset_image_path = "../../../dataset_image/FlyingBird/train/"
     data = open("./img_label_five_continuous_difficulty_train.txt").readlines()
     #################LOC
 
@@ -425,7 +426,7 @@ if __name__ == '__main__':
     batch_size = 1
     
 
-    train_data = CustomDataset(data, image_size, image_path=dataset_image_path, input_mode=input_mode, continues_num=continues_num)
+    train_data = CustomDataset(data, image_size, image_path=dataset_image_path, input_mode=input_mode, continues_num=continues_num, assign_method=assign_method)
     dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=False, collate_fn=dataset_collate)
 
     print(len(dataloader))

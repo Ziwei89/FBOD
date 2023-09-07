@@ -50,7 +50,7 @@ class opts(object):
                             help='video_path: The video path.')
         
         self.parser.add_argument('--video_name', default="bird_2.mp4", type=str,
-                            help='model_name: The model name for loade.')
+                            help='video_name: The vido name for testing.')
         
         
     def parse(self):
