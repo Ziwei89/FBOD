@@ -16,7 +16,7 @@ from FB_detector_multi_scale import FB_Postprocess
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from utils.utils import FBObj
-from dataloader.dataset_bbox import CustomDataset, dataset_collate
+from dataloader.mydataset import CustomDataset_multi_head, dataset_collate_multi_head
 from mAP import mean_average_precision
 import copy
 
@@ -68,7 +68,10 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
         for iteration, batch in enumerate(gen):
             if iteration >= epoch_size:
                 break
-            images, targets, names = batch[0], batch[1], batch[2]
+            images, targets= batch[0], batch[1]
+            ### targets [[large],[medium],[small]]
+            # print(len(targets[0][0]))
+            # print(targets[1][0][0].size())
             #print(images.shape) 1,7,384,672
             with torch.no_grad():
                 # if cuda:
@@ -79,15 +82,15 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
                 #     targets = [Variable(fature_label)for fature_label in targets] ##
                 if cuda:
                     images = Variable(torch.from_numpy(images)).to(torch.device('cuda:0'))
-                    targets = [Variable(torch.from_numpy(fature_label)) for fature_label in targets] ## 
+                    targets = [[Variable(torch.from_numpy(fature_label)) for fature_label in ann] for ann in targets] ##
                 else:
                     images = Variable(torch.from_numpy(images))
-                    targets = [Variable(torch.from_numpy(fature_label).type(torch.FloatTensor)) for fature_label in targets] ##
+                    targets = [[Variable(torch.from_numpy(fature_label).type(torch.FloatTensor)) for fature_label in ann] for ann in targets] ##
             optimizer.zero_grad()
             outputs = net(images)
             losses = []
             for i in range(3):
-                loss_item = loss_func[i](outputs[i], targets)
+                loss_item = loss_func[i](outputs[i], targets[i])
                 losses.append(loss_item)
             loss = sum(losses)
             loss.backward()
@@ -111,8 +114,7 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
         for iteration, batch in enumerate(genval):
             if iteration >= epoch_size_val:
                 break
-            images_val, targets_val = batch[0], batch[1]
-            labels_list = copy.deepcopy(targets_val)
+            images_val, targets_val, labels_list = batch[0], batch[1], batch[2]
             with torch.no_grad():
                 # if cuda:
                 #     images_val = Variable(images_val).to(torch.device('cuda:0'))
@@ -122,16 +124,16 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
                 #     targets_val = [Variable(fature_label)for fature_label in targets_val] ##
                 if cuda:
                     images_val = Variable(torch.from_numpy(images_val)).to(torch.device('cuda:0'))
-                    targets_val = [Variable(torch.from_numpy(fature_label)) for fature_label in targets_val] ## 
+                    targets_val = [[Variable(torch.from_numpy(fature_label)) for fature_label in ann] for ann in targets_val] ##
                 else:
                     images_val = Variable(torch.from_numpy(images_val))
-                    targets_val = [Variable(torch.from_numpy(fature_label).type(torch.FloatTensor)) for fature_label in targets_val] ##
+                    targets_val = [[Variable(torch.from_numpy(fature_label).type(torch.FloatTensor)) for fature_label in ann] for ann in targets_val] ##
                 optimizer.zero_grad()
                 outputs = net(images_val)
 
                 losses = []
                 for i in range(3):
-                    loss_item = loss_func[i](outputs[i], targets_val)
+                    loss_item = loss_func[i](outputs[i], targets_val[i])
                     losses.append(loss_item)
                 loss = sum(losses)
                 val_loss += loss
@@ -219,8 +221,10 @@ if __name__ == "__main__":
 
     opt = opts().parse()
     # assign_method: The label assign method. binary_assign, guassian_assign or auto_assign
-    if opt.assign_method == "auto_assign":
-        abbr_assign_method = "aa"
+    if opt.assign_method == "binary_assign":
+        abbr_assign_method = "ba"
+    elif opt.assign_method == "guassian_assign":
+        abbr_assign_method = "ga"
     else:
         raise("Error! assign_method error.")
     
@@ -294,7 +298,7 @@ if __name__ == "__main__":
     scale_min_max_list = [[80,256],[48,80],[13,48]] ### Need to count the object scale, and divide to 3 sets, log the min max of each set.
     loss_funcM = []
     for i in range(3):
-        loss_funcM.append(LossFuncM(num_classes=num_classes, cuda=Cuda, scale_list=scale_min_max_list[i], stride=stride_list[i], gettargets=True))
+        loss_funcM.append(LossFuncM(num_classes=num_classes, cuda=Cuda, scale_list=scale_min_max_list[i], stride=stride_list[i], gettargets=False))
 
     # For calculating the AP50
     scale_max_list = [scale_min_max_list[0][1], scale_min_max_list[1][1], scale_min_max_list[2][1]]
@@ -318,82 +322,42 @@ if __name__ == "__main__":
         val_lines = f.readlines()
         num_val = len(val_lines)
 
-    second_start_epoch = 0
     
     #------------------------------------------------------#
     #------------------------------------------------------#
+    lr = 1e-3
+    Batch_size = opt.Batch_size
+    Freeze_Epoch = 0
+    # Freeze_Epoch = 85
+    Unfreeze_Epoch = 100
+    # Unfreeze_Epoch = 200
 
-    # if os.path.exists(opt.pretrain_model_path):
-    if False:
-        second_start_epoch = 50
-
-        lr = 1e-3
-        Batch_size = opt.Batch_size
-        Init_Epoch = 0
-        Freeze_Epoch = 50
-        
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
-        
-        # (train_lines, image_size, image_path, input_mode="GRG", continues_num=5)
-        train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=8, pin_memory=True, collate_fn=dataset_collate)
-
-        val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=8, pin_memory=True, collate_fn=dataset_collate)
-
-        epoch_size = max(1, num_train//Batch_size)
-        epoch_size_val = num_val//Batch_size
-        #------------------------------------#
-        #   冻结一定部分训练
-        #------------------------------------#
-        for param in model.extract_features.backbone.parameters():
-            param.requires_grad = False
-        
-        largest_AP_50=0
-        for epoch in range(Init_Epoch,Freeze_Epoch):
-            train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_funcM,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Freeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
-            largest_AP_50 = largest_AP_50_record
-            if (epoch+1)>=2:
-                draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
-            if (epoch+1)>=50:
-                draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
-            lr_scheduler.step()
-
-    if True:
-        lr = 1.748 * 1e-4
-        Batch_size = opt.Batch_size
-        Freeze_Epoch = second_start_epoch
-        # Freeze_Epoch = 85
-        Unfreeze_Epoch = 100
-        # Unfreeze_Epoch = 200
-
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
-        
-        train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
-        # train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
-       
-        val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
-        # val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
+    
+    train_data = CustomDataset_multi_head(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+    train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate_multi_head)
+    # train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    
+    val_data = CustomDataset_multi_head(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+    val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate_multi_head)
+    # val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
 
-        epoch_size = max(1, num_train//Batch_size)
-        epoch_size_val = num_val//Batch_size
-        #------------------------------------#
-        #   解冻后训练
-        #------------------------------------#
-        for param in model.extract_features.backbone.parameters():
-            param.requires_grad = True
+    epoch_size = max(1, num_train//Batch_size)
+    epoch_size_val = num_val//Batch_size
+    #------------------------------------#
+    #   解冻后训练
+    #------------------------------------#
+    for param in model.extract_features.backbone.parameters():
+        param.requires_grad = True
 
-        largest_AP_50=0
-        for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
-            train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_funcM,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Unfreeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
-            largest_AP_50 = largest_AP_50_record
-            if (epoch+1)>=2:
-                draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
-            if (epoch+1)>=30:
-                draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
-            lr_scheduler.step()
+    largest_AP_50=0
+    for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
+        train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_funcM,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Unfreeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
+        largest_AP_50 = largest_AP_50_record
+        if (epoch+1)>=2:
+            draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
+        if (epoch+1)>=30:
+            draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
+        lr_scheduler.step()

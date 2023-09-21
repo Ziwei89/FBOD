@@ -171,7 +171,7 @@ def fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,ge
     else:
         return total_loss/(epoch_size+1), val_loss/(epoch_size_val+1), largest_AP_50, 0.80
 
-num_to_english_c_dic = {3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
+num_to_english_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
 
 ####################### Plot figure #######################################
 x_epoch = []
@@ -263,16 +263,14 @@ if __name__ == "__main__":
     #-------------------------------------------#
     #   load model
     #-------------------------------------------#
-    model_path = "logs/five/384_672/GRG_multiinput_cspdarknet53_ga_0816_1/Epoch45-Total_Loss0.4866-Val_Loss2.1744-AP_50_0.7044.pth"
-    # model_path = "logs/non.pth"
-    if os.path.exists(model_path):
+    if os.path.exists(opt.pretrain_model_path):
         print('Loading weights into state dict...')
         if Cuda:
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         else:
             device = torch.device('cpu')
         model_dict = model.state_dict()
-        pretrained_dict = torch.load(model_path, map_location=device)
+        pretrained_dict = torch.load(opt.pretrain_model_path, map_location=device)
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if np.shape(model_dict[k]) ==  np.shape(v)}
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
@@ -317,7 +315,7 @@ if __name__ == "__main__":
     #------------------------------------------------------#
     #------------------------------------------------------#
 
-    # if os.path.exists(model_path):
+    # if os.path.exists(opt.pretrain_model_path):
     if False:
         second_start_epoch = 50
 

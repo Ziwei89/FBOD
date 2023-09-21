@@ -8,7 +8,7 @@ from config.opts import opts
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
-num_to_english_c_dic = {3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
+num_to_english_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
 
 if __name__ == "__main__":
     opt = opts().parse()

@@ -264,7 +264,7 @@ class LossFuncM(nn.Module): #
         self.num_classes = num_classes
         self.model_input_size = model_input_size
         self.scale_list = scale_list
-        #(model_input_size, num_classes=2, stride=2,8 or 32)
+        #(model_input_size, num_classes=2, stride=32,8 or 2)
         self.get_targets = getTargets(model_input_size, num_classes, scale_list[1], stride, cuda) ### normalization scale use maximum(length)
         self.cuda = cuda
         self.gettargets = gettargets
@@ -276,17 +276,18 @@ class LossFuncM(nn.Module): #
         # print("input[1].size()")
         # print(input[1].size())
         bs = input[0].size(0)
-        in_h = input[0].size(2) # in_h = model_input_size[1]/stride (stride = 2,8 or 32)
+        in_h = input[0].size(2) # in_h = model_input_size[1]/stride (stride = 32,8 or 2)
         in_w = input[0].size(3) # in_w
 
         targets = copy.deepcopy(targets_all)
-        #### filter the outer scale targets
-        targets = filter_outermin_scale_targets(targets, bs, self.scale_list[0])
-        targets = filter_outermax_scale_targets(targets, bs, self.scale_list[1])
+        
 
         FloatTensor = torch.cuda.FloatTensor if self.cuda else torch.FloatTensor
         # targets is bboxes, bbox[0] cx, bbox[1] cy, bbox[2] w, bbox[3] h, bbox[4] class_id, bbox[5] score
         if self.gettargets:
+            #### filter the outer scale targets
+            targets = filter_outermin_scale_targets(targets, bs, self.scale_list[0])
+            targets = filter_outermax_scale_targets(targets, bs, self.scale_list[1])
             targets = self.get_targets(input, targets) ### targets is a list wiht 2 members, each is a 'bs,in_h,in_w,c' format tensor(cls and bbox).
 
         

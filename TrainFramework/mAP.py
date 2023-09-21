@@ -110,7 +110,7 @@ def labels_to_results(bboxes, image_id):
         label_obj_list.append(FBObj(score=1.0, image_id=image_id, bbox=bbox[:4]))
     return label_obj_list
 
-num_to_english_c_dic = {3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
+num_to_english_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
 
 if __name__ == "__main__":
     opt = opts().parse()

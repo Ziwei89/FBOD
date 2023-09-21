@@ -298,6 +298,180 @@ class CustomDataset(Dataset):
             label_list.append(points_label_map)
         return label_list
 
+def Distance(pointa,pointb):
+    return math.sqrt((pointa[0]-pointb[0])**2+(pointa[1]-pointb[1])**2)
+
+class CustomDataset_multi_head(Dataset):
+    def __init__(self, train_lines, image_size, image_path, input_mode="GRG", continues_num=5, classes_num=2,
+                       default_inner_proportion=0.7, stride=[32,8,2], obj_maxsize_scale=[256.,80.,48.]): ##large medium small
+        # input_mode: "RGB" or "GRG". "RGB" means all the image is rgb mode. "GRG" means that the middle image remains RGB,
+        # and the others will be coverted to gray.
+        self.train_lines = train_lines
+        self.train_batches = len(train_lines)
+        self.image_path = image_path
+        self.input_mode = input_mode
+        self.frame_num = continues_num
+        self.image_size = image_size#(672,384)#w,h
+
+        self.classes_num = classes_num # include the background
+        self.default_inner_proportion = default_inner_proportion
+        self.out_feature_size = [[self.image_size[0]/s, self.image_size[1]/s] for s in stride]  ## w,h ##large medium small
+        self.size_per_ref_point = [self.image_size[0]/obj[0] for obj in self.out_feature_size] ##large medium small
+        self.obj_maxsize_scale = obj_maxsize_scale
+
+    def __load_data(self, line):
+        """line of train_lines was saved as 'image name, label'"""
+        line =  line.split()
+        first_img_name = line[0]
+        first_img_num_str = first_img_name.split(".")[0].split("_")[-1]
+        first_img_num = int(first_img_num_str)
+        images = []
+        for num in range(first_img_num, first_img_num + self.frame_num):
+            num_str = "%05d" % int(num)
+            img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
+            image_full_name = os.path.join(self.image_path,img_name)
+            image = cv2.imread(image_full_name)
+            images.append(image)
+        if  line[1:][0] == "None":
+            bboxes = np.array([])
+            images = DataAug.Resize((self.image_size[1], self.image_size[0]), False)(np.copy(images), np.copy(bboxes)) ## h,w
+        else:
+            bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
+            # images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
+            # images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
+            # images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
+        # print(bboxes)
+        return images, bboxes
+
+    def __getitem__(self, index):
+        lines = self.train_lines
+        img_list, y = self.__load_data(lines[index])
+        if self.input_mode == "RGB":
+            img_inp = self.__Cv2ToImage_Concate(img_list)
+        else:
+            img_inp = self.__Cv2ToImage_OnlyMidRGB_Concate(img_list)
+        bboxes = copy.deepcopy(y)
+        targets = self.__create_multi_head_label(y) # multi head
+        return img_inp, targets, bboxes, lines[index].split(".")[0]
+
+    def __len__(self):  
+        return self.train_batches
+    
+    def __Cv2ToImage_Concate(self,img_list):
+        # Covert and Concate the image list to an images array.
+        img_inp = []
+        for img in img_list:# Differen't from second stage.   
+            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img)
+            img = np.array(img, dtype=np.float32)# img shape is h,w,c 384,672,3
+            img_inp.append(np.transpose(img / 255.0, (2, 0, 1)))
+        img_inp = np.array(img_inp)
+        img_inp = np.concatenate(img_inp, axis = 0)
+        return img_inp
+    
+    def __Cv2ToImage_OnlyMidRGB_Concate(self, img_list):
+        # Covert and Concate the image list to an images array.
+        # The middle image remains RGB, and the others will be coverted to gray.
+        img_inp=[]
+        for i, img in enumerate(img_list):
+            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img)
+            if i == int(self.frame_num/2):
+                img = np.array(img, dtype=np.float32)# img shape is h,w,c 384,672,3
+            else:
+                img = np.array(img.convert('L'), dtype=np.float32)
+                img = img.reshape(self.image_size[1],self.image_size[0],1)
+            # print(img.shape)
+            img_inp.append(np.transpose(img / 255.0, (2, 0, 1)))
+        img_inp = np.array(img_inp, dtype=object)
+        img_inp = np.concatenate(img_inp, axis = 0)
+        return img_inp
+    
+    # No difficulty difference and no guassian heatmap
+    def __create_multi_head_label(self, bboxes):
+        if len(bboxes) > 0:
+            # convert x1,y1,x2,y2 to cx,cy,w,h
+            bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 0] ## w
+            bboxes[:, 3] = bboxes[:, 3] - bboxes[:, 1] ## h
+            bboxes[:, 0] = bboxes[:, 0] + bboxes[:, 2] / 2 # cx
+            bboxes[:, 1] = bboxes[:, 1] + bboxes[:, 3] / 2 # cy
+        
+            
+
+        lms_obj_list = [[],[],[]] # large, medium, small
+        for bbox in bboxes:
+            obj_area = bbox[2] * bbox[3]
+            if obj_area == 0:
+                continue
+            obj_scale = bbox[2]**2 + bbox[3]**2
+
+            ###  bbox[0] cx, bbox[1] cy, bbox[2] w, bbox[3] h, bbox[4] class_id, bbox[5] difficult ###
+            inner_bbox = copy.deepcopy(bbox[:4]) ###  inner_bbox[0] cx, inner_bbox[1] cy, inner_bbox[2] w, inner_bbox[3] h
+            inner_bbox[2] = inner_bbox[2] * self.default_inner_proportion ### w
+            inner_bbox[3] = inner_bbox[3] * self.default_inner_proportion ### h
+            
+            # To determin which layer the obj belones to.
+            # self.obj_maxsize_scale is a list. # large, medium, small  ### 256, 80, 48
+            # self.size_per_ref_point is a list. # large, medium, small  ### 32, 8, 2
+            if obj_scale < (self.obj_maxsize_scale[2])**2:
+                lamda =  self.size_per_ref_point[2] / obj_area**0.5 #This parameter is related to the size of the target, and the smaller the target, the larger the parameter. 
+                bbox_inner_bbox_lamda = [bbox] + [inner_bbox] + [lamda]
+                lms_obj_list[2].append(bbox_inner_bbox_lamda)  #small object
+            elif obj_scale >= (self.obj_maxsize_scale[1])**2:
+                lamda =  self.size_per_ref_point[0] / obj_area**0.5 #This parameter is related to the size of the target, and the smaller the target, the larger the parameter. 
+                bbox_inner_bbox_lamda = [bbox] + [inner_bbox] + [lamda]
+                lms_obj_list[0].append(bbox_inner_bbox_lamda)  #large object
+            else:
+                lamda =  self.size_per_ref_point[1] / obj_area**0.5 #This parameter is related to the size of the target, and the smaller the target, the larger the parameter. 
+                bbox_inner_bbox_lamda = [bbox] + [inner_bbox] + [lamda]
+                lms_obj_list[1].append(bbox_inner_bbox_lamda)  #medium object
+
+        label_list = [] # The list has 3 lists members (means large, medium, small), each list has two members, class_label_map and points_label_map
+        # self.out_feature_size is a list. # To predict large, medium, small objects (image_size/32, image_size/8, image_size/2)
+        for index, obj_list in enumerate(lms_obj_list):
+            sample_position_list = []
+            class_label_map = np.array(([1.] + [0.] * (self.classes_num - 1))*int(self.out_feature_size[index][0])*int(self.out_feature_size[index][1]))
+            points_label_map = np.array([1.]*6*int(self.out_feature_size[index][0])*int(self.out_feature_size[index][1]))
+            if len(obj_list) == 0:
+                label_list.append([class_label_map, points_label_map])
+            else:
+                for obj in obj_list:
+                    min_wight_index, min_height_index, max_wight_index, max_height_index = min_max_ref_point_index(obj[0],self.out_feature_size[index],self.image_size)
+                    for i in range(min_height_index, max_height_index+1):
+                        for j in range(min_wight_index, max_wight_index+1):
+                            ref_point_position = []
+                            ref_point_position.append(j*(self.image_size[0]/self.out_feature_size[index][0]) + (self.image_size[0]/self.out_feature_size[index][0])/2) #### x
+                            ref_point_position.append(i*(self.image_size[1]/self.out_feature_size[index][1]) + (self.image_size[1]/self.out_feature_size[index][1])/2) #### y
+
+                            if is_point_in_bbox(ref_point_position, obj[1]):# The point is in inner bbox.
+                                if (i,j) in sample_position_list:
+                                    for class_id_index in range(self.classes_num): # Ignore this point
+                                        class_label_map[(i*int(self.out_feature_size[index][0]) + j) * self.classes_num + class_id_index] = 0
+                                        #continue before 2023/08/03
+                                    continue ### debug error. 2023/08/03
+                                else:
+                                    sample_position_list.append((i,j))
+                                    class_label_map[(i*int(self.out_feature_size[index][0]) + j) * self.classes_num + 0] = 0
+                                    class_label_map[(i*int(self.out_feature_size[index][0]) + j) * self.classes_num + int(obj[0][4]) + 1] = 1
+
+                                    points_label_map[(i*int(self.out_feature_size[index][0]) + j) * 6 + 0] = obj[0][0] # cx
+                                    points_label_map[(i*int(self.out_feature_size[index][0]) + j) * 6 + 1] = obj[0][1] # cy
+                                    points_label_map[(i*int(self.out_feature_size[index][0]) + j) * 6 + 2] = obj[0][2] # w
+                                    points_label_map[(i*int(self.out_feature_size[index][0]) + j) * 6 + 3] = obj[0][3] # h
+                                    
+
+                                    points_label_map[(i*int(self.out_feature_size[index][0]) + j) * 6 + 4] = obj[0][5] # difficult
+                                    points_label_map[(i*int(self.out_feature_size[index][0]) + j) * 6 + 5] = obj[2] # lamda parameter
+
+                            else:# The point is out inner box.
+                                if is_point_in_bbox(ref_point_position, obj[0]):# The point is in object bounding box but out inner box.
+                                    class_label_map[(i*int(self.out_feature_size[index][0]) + j) * self.classes_num + 0] = 0
+                label_list.append([class_label_map, points_label_map])
+        return label_list
+
+
 # DataLoader中collate_fn使用
 def dataset_collate(batch):
     images = []
@@ -317,6 +491,46 @@ def dataset_collate(batch):
     targets.append(targets_cls)
     targets_loc = np.array(targets_loc)
     targets.append(targets_loc)
+    return images, targets, bboxes, names
+
+# DataLoader中collate_fn使用
+def dataset_collate_multi_head(batch):
+    images = []
+    targets = []
+    targets_large_cls = []
+    targets_large_loc = []
+    targets_medium_cls = []
+    targets_medium_loc = []
+    targets_small_cls = []
+    targets_small_loc = []
+    bboxes = []
+    names = []
+    for img, target, box, name in batch:
+        images.append(img)
+
+        targets_large_cls.append(target[0][0])
+        targets_large_loc.append(target[0][1])
+
+        targets_medium_cls.append(target[1][0])
+        targets_medium_loc.append(target[1][1])
+
+        targets_small_cls.append(target[2][0])
+        targets_small_loc.append(target[2][1])
+
+        bboxes.append(box)
+        names.append(name)
+    images = np.array(images)
+    targets_large_cls = np.array(targets_large_cls)
+    targets_large_loc = np.array(targets_large_loc)
+    targets.append([targets_large_cls, targets_large_loc])
+
+    targets_medium_cls = np.array(targets_medium_cls)
+    targets_medium_loc = np.array(targets_medium_loc)
+    targets.append([targets_medium_cls, targets_medium_loc])
+
+    targets_small_cls = np.array(targets_small_cls)
+    targets_small_loc = np.array(targets_small_loc)
+    targets.append([targets_small_cls, targets_small_loc])
     return images, targets, bboxes, names
 
 def datasetImgTocv2Mat_RGB(image_datas):

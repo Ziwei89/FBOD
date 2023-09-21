@@ -7,7 +7,7 @@ from utils.utils import FB_boxdecoder, FBObj
 import time
 
 
-num_to_english_c_dic = {3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
+num_to_english_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
 class FB_detector(object):
     _defaults = {
         "confidence": 0.3,
@@ -85,7 +85,7 @@ class FB_detector(object):
             outputs_temp.append(self.boxdecoder[i](predictions[i]))
         bs = len(outputs_temp[0])
         for b in range(bs):
-            outputs_temp_b = torch.concat([outputs_temp[0][i], outputs_temp[1][i],outputs_temp[3][i]], dim=0)
+            outputs_temp_b = torch.concat([outputs_temp[0][b], outputs_temp[1][b],outputs_temp[2][b]], dim=0)
             keep = nms(outputs_temp_b[:, :4], outputs_temp_b[:, 4], self.iou) ### The outputs concat from different scale, NMS needing again
             outputs_temp_b_keep = outputs_temp_b[keep]
             outputs.append(outputs_temp_b_keep)
@@ -150,7 +150,7 @@ class FB_Postprocess(object):
         
         bs = len(outputs_temp[0])
         for b in range(bs):
-            outputs_temp_b = torch.concat([outputs_temp[0][i], outputs_temp[1][i],outputs_temp[3][i]], dim=0)
+            outputs_temp_b = torch.concat([outputs_temp[0][b], outputs_temp[1][b],outputs_temp[2][b]], dim=0)
             keep = nms(outputs_temp_b[:, :4], outputs_temp_b[:, 4], self.iou) ### The outputs concat from different scale, NMS needing again
             outputs_temp_b_keep = outputs_temp_b[keep]
             outputs.append(outputs_temp_b_keep)

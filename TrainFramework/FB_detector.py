@@ -6,7 +6,7 @@ from utils.utils import FB_boxdecoder, FBObj
 import time
 
 
-num_to_english_c_dic = {3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
+num_to_english_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
 class FB_detector(object):
     _defaults = {
         "confidence": 0.3,
