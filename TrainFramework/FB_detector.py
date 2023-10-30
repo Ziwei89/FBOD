@@ -26,22 +26,15 @@ class FB_detector(object):
     ### FBODInferenceBody parameters:
     ### input_img_num=5, aggregation_output_channels=16, aggregation_method="multiinput", input_mode="GRG", ### Aggreagation parameters.
     ### backbone_name="cspdarknet53": ### Extract parameters. input_channels equal to aggregation_output_channels.
-    def __init__(self, raw_image_shape=(720,1280), model_input_size=(384,672),
+    def __init__(self, model_input_size=(384,672),
                        input_img_num=5, aggregation_output_channels=16, aggregation_method="multiinput", input_mode="GRG", backbone_name="cspdarknet53", fusion_method="concat",
                        abbr_assign_method="ba", Add_name="0812_1", model_name="FB_object_detect_model.pth",
                        scale=80.):
         self.__dict__.update(self._defaults)
 
         
-        self.raw_image_shape = raw_image_shape
         self.model_input_size=model_input_size
 
-        ############## The parameter transfom the output to raw image
-        self.resize_ratio = min(model_input_size[0] / raw_image_shape[0], model_input_size[1] / raw_image_shape[1]) # h,w
-        resized_image_shape = (raw_image_shape[0]*self.resize_ratio, raw_image_shape[1]*self.resize_ratio)
-        self.offset_top = (model_input_size[0] - resized_image_shape[0])/2
-        self.offset_left = (model_input_size[1] - resized_image_shape[1])/2
-        ############## The parameter transfom the output to raw image
 
         # create model
         self.input_img_num = input_img_num
@@ -66,7 +59,14 @@ class FB_detector(object):
         self.boxdecoder = FB_boxdecoder(model_input_size=model_input_size, score_threshold=self.confidence,
                                         nms_thres=self.iou, scale=scale)
     
-    def detect_image(self, images):
+    def detect_image(self, images, raw_image_shape):
+
+        ############## The parameter transfom the output to raw image
+        resize_ratio = min(self.model_input_size[0] / raw_image_shape[0], self.model_input_size[1] / raw_image_shape[1]) # h,w
+        resized_image_shape = (raw_image_shape[0]*resize_ratio, raw_image_shape[1]*resize_ratio)
+        offset_top = (self.model_input_size[0] - resized_image_shape[0])/2
+        offset_left = (self.model_input_size[1] - resized_image_shape[1])/2
+        ############## The parameter transfom the output to raw image
 
         with torch.no_grad():
             images = torch.from_numpy(images)
@@ -80,8 +80,8 @@ class FB_detector(object):
         # print("outputs")
         # print(outputs)
         for b in range(len(outputs)):
-            outputs[b][:,[0, 2]] = (outputs[b][:,[0, 2]] - self.offset_left) / self.resize_ratio
-            outputs[b][:,[1, 3]] = (outputs[b][:,[1, 3]] - self.offset_top) / self.resize_ratio
+            outputs[b][:,[0, 2]] = (outputs[b][:,[0, 2]] - offset_left) / resize_ratio
+            outputs[b][:,[1, 3]] = (outputs[b][:,[1, 3]] - offset_top) / resize_ratio
         return outputs
     
     def inference(self, images):
@@ -110,17 +110,10 @@ class FB_Postprocess(object):
     #---------------------------------------------------#
     #   Initialize FB_postprocess
     #---------------------------------------------------#
-    def __init__(self, batch_size, model_input_size=(384,672), raw_image_shape=(720,1280), scale=80.):
+    def __init__(self, batch_size, model_input_size=(384,672), scale=80.):
         self.__dict__.update(self._defaults)
         self.batch_size = batch_size
         self.model_input_size = model_input_size
-        self.raw_image_shape = raw_image_shape
-
-        self.resize_ratio = min(model_input_size[0] / raw_image_shape[0], model_input_size[1] / raw_image_shape[1]) # h,w
-        resized_image_shape = (raw_image_shape[0]*self.resize_ratio, raw_image_shape[1]*self.resize_ratio)
-
-        self.offset_top = (model_input_size[0] - resized_image_shape[0])/2
-        self.offset_left = (model_input_size[1] - resized_image_shape[1])/2
 
 
         self.boxdecoder = FB_boxdecoder(model_input_size=self.model_input_size,
@@ -130,10 +123,6 @@ class FB_Postprocess(object):
     def Process(self, model_outputs, iteration):
         obj_result_list = []
         outputs = self.boxdecoder(model_outputs)
-
-        for b in range(len(outputs)):
-            outputs[b][:,[0, 2]] = (outputs[b][:,[0, 2]] - self.offset_left) / self.resize_ratio
-            outputs[b][:,[1, 3]] = (outputs[b][:,[1, 3]] - self.offset_top) / self.resize_ratio
 
         for batch_id in range(self.batch_size):
             image_id = self.batch_size*iteration + batch_id

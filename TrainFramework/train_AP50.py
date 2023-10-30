@@ -37,22 +37,15 @@ def get_lr(optimizer):
         return param_group['lr']
 
 class LablesToResults(object):
-    def __init__(self, batch_size, model_input_size=(384,672), image_size=(720, 1280)):#h,w
+    def __init__(self, batch_size):
         self.batch_size = batch_size
-        self.resize_ratio = min(model_input_size[0] / image_size[0], model_input_size[1] / image_size[1])
-        resized_image_shape = (image_size[0]*self.resize_ratio, image_size[1]*self.resize_ratio)
 
-        self.offset_top = (model_input_size[0] - resized_image_shape[0])/2
-        self.offset_left = (model_input_size[1] - resized_image_shape[1])/2
-
-    def covert(self, labels_list, iteration): # TO Raw image size
+    def covert(self, labels_list, iteration):
         label_obj_list = []
         for batch_id in range(self.batch_size):
             labels = labels_list[batch_id]
             if labels.size==0:
                 continue
-            labels[:,[0, 2]] = (labels[:,[0, 2]] - self.offset_left) / self.resize_ratio
-            labels[:,[1, 3]] = (labels[:,[1, 3]] - self.offset_top) / self.resize_ratio
             image_id = self.batch_size*iteration + batch_id
             for label in labels:
                 # class_id = label[4] + 1 ###Include background in this project, the label didn't include background classes.
@@ -236,16 +229,15 @@ if __name__ == "__main__":
 
     #-------------------------------#
     #-------------------------------#
-    raw_image_shape = (int(opt.raw_image_shape.split("_")[0]), int(opt.raw_image_shape.split("_")[1])) # H,W
     model_input_size = (int(opt.model_input_size.split("_")[0]), int(opt.model_input_size.split("_")[1])) # H,W
     
     Cuda = True
 
     train_annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_train.txt"
-    train_dataset_image_path = opt.data_image_path + "train/"
+    train_dataset_image_path = opt.data_path + "train/images/"
     
     val_annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_val.txt"
-    val_dataset_image_path = opt.data_image_path + "val/"
+    val_dataset_image_path = opt.data_path + "val/images/"
     #-------------------------------#
     # 
     #-------------------------------#
@@ -290,8 +282,8 @@ if __name__ == "__main__":
     loss_func = LossFunc(num_classes=num_classes, cuda=Cuda, gettargets=True)
 
     # For calculating the AP50
-    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size, raw_image_shape=np.array(raw_image_shape))
-    labels_to_results = LablesToResults(batch_size=opt.Batch_size, image_size=np.array(raw_image_shape))
+    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size)
+    labels_to_results = LablesToResults(batch_size=opt.Batch_size)
 
     # # 0.2用于验证，0.8用于训练
     # val_split = 0.1
@@ -309,83 +301,43 @@ if __name__ == "__main__":
     with open(val_annotation_path) as f:
         val_lines = f.readlines()
         num_val = len(val_lines)
-
-    second_start_epoch = 0
     
     #------------------------------------------------------#
     #------------------------------------------------------#
 
-    # if os.path.exists(opt.pretrain_model_path):
-    if False:
-        second_start_epoch = 50
+    lr = 1e-3
+    Batch_size = opt.Batch_size
+    Freeze_Epoch = 0
+    # Freeze_Epoch = 85
+    Unfreeze_Epoch = 100
+    # Unfreeze_Epoch = 200
 
-        lr = 1e-3
-        Batch_size = opt.Batch_size
-        Init_Epoch = 0
-        Freeze_Epoch = 50
-        
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
-        
-        # (train_lines, image_size, image_path, input_mode="GRG", continues_num=5)
-        train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=8, pin_memory=True, collate_fn=dataset_collate)
-
-        val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=8, pin_memory=True, collate_fn=dataset_collate)
-
-        epoch_size = max(1, num_train//Batch_size)
-        epoch_size_val = num_val//Batch_size
-        #------------------------------------#
-        #   冻结一定部分训练
-        #------------------------------------#
-        for param in model.extract_features.backbone.parameters():
-            param.requires_grad = False
-        
-        largest_AP_50=0
-        for epoch in range(Init_Epoch,Freeze_Epoch):
-            train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Freeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
-            largest_AP_50 = largest_AP_50_record
-            if (epoch+1)>=2:
-                draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
-            if (epoch+1)>=50:
-                draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
-            lr_scheduler.step()
-
-    if True:
-        lr = 1e-3
-        Batch_size = opt.Batch_size
-        Freeze_Epoch = second_start_epoch
-        # Freeze_Epoch = 85
-        Unfreeze_Epoch = 100
-        # Unfreeze_Epoch = 200
-
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
-        
-        train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
-        # train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
-       
-        val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
-        val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
-        # val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
+    
+    train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+    train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
+    # train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    
+    val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+    val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
+    # val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
 
-        epoch_size = max(1, num_train//Batch_size)
-        epoch_size_val = num_val//Batch_size
-        #------------------------------------#
-        #   解冻后训练
-        #------------------------------------#
-        for param in model.extract_features.backbone.parameters():
-            param.requires_grad = True
+    epoch_size = max(1, num_train//Batch_size)
+    epoch_size_val = num_val//Batch_size
+    #------------------------------------#
+    #   解冻后训练
+    #------------------------------------#
+    for param in model.extract_features.backbone.parameters():
+        param.requires_grad = True
 
-        largest_AP_50=0
-        for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
-            train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Unfreeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
-            largest_AP_50 = largest_AP_50_record
-            if (epoch+1)>=2:
-                draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
-            if (epoch+1)>=30:
-                draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
-            lr_scheduler.step()
+    largest_AP_50=0
+    for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
+        train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Unfreeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
+        largest_AP_50 = largest_AP_50_record
+        if (epoch+1)>=2:
+            draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)
+        if (epoch+1)>=30:
+            draw_curve_ap50(epoch+1, AP_50, log_pic_name_ap50)
+        lr_scheduler.step()

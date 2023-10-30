@@ -114,8 +114,6 @@ num_to_english_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"e
 
 if __name__ == "__main__":
     opt = opts().parse()
-
-    raw_image_shape = (int(opt.raw_image_shape.split("_")[0]), int(opt.raw_image_shape.split("_")[1])) # H,W
     model_input_size = (int(opt.model_input_size.split("_")[0]), int(opt.model_input_size.split("_")[1])) # H,W
 
     input_img_num = opt.input_img_num
@@ -138,18 +136,18 @@ if __name__ == "__main__":
     model_name=opt.model_name
 
     # FB_detector parameters
-    # raw_image_shape=(720,1280), model_input_size=(384,672),
+    # model_input_size=(384,672),
     # input_img_num=5, aggregation_output_channels=16, aggregation_method="multiinput", input_mode="GRG", backbone_name="cspdarknet53",
     # Add_name="as_1021_1", model_name="FB_object_detect_model.pth",
     # scale=80.
     
-    fb_detector = FB_detector(raw_image_shape=raw_image_shape, model_input_size=model_input_size,
+    fb_detector = FB_detector(model_input_size=model_input_size,
                               input_img_num=input_img_num, aggregation_output_channels=aggregation_output_channels,
                               aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
                               abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
     
     annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[input_img_num] + "_continuous_difficulty.txt"
-    dataset_image_path = "../images/"
+    dataset_image_path = opt.data_path + "val/images/"
 
     # val_lines = open(annotation_path).readlines()
     # # # 0.1用于验证，0.9用于训练
@@ -168,12 +166,12 @@ if __name__ == "__main__":
     all_label_obj_list = []
     all_obj_result_list = []
     for i, line in enumerate(val_lines):
-        images, bboxes, _ = load_data(line, dataset_image_path, frame_num=input_img_num, image_size=model_input_size)
-
+        images, bboxes, _ = load_data(line, dataset_image_path, frame_num=input_img_num)
+        raw_image_shape = np.array(images[0].shape[0:2]) # h,w
         all_label_obj_list += labels_to_results(bboxes, i)
 
         _, model_input= GetMiddleImg_ModelInput_for_MatImageList(images, model_input_size=model_input_size, continus_num=input_img_num, input_mode=input_mode)
-        outputs = fb_detector.detect_image(model_input, image_shape=np.array(model_input_size))
+        outputs = fb_detector.detect_image(model_input, raw_image_shape=raw_image_shape)
 
         if outputs != None:
             obj_result_list = []

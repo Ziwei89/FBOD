@@ -33,7 +33,6 @@ def ConvertAnnotationLabelToFBObj(annotation_file, image_id):
 if __name__ == "__main__":
     opt = opts().parse()
 
-    raw_image_shape = (int(opt.raw_image_shape.split("_")[0]), int(opt.raw_image_shape.split("_")[1])) # H,W
     model_input_size = (int(opt.model_input_size.split("_")[0]), int(opt.model_input_size.split("_")[1])) # H,W
 
     input_img_num = opt.input_img_num
@@ -56,20 +55,20 @@ if __name__ == "__main__":
     model_name=opt.model_name
 
     # FB_detector parameters
-    # raw_image_shape=(720,1280), model_input_size=(384,672),
+    # model_input_size=(384,672),
     # input_img_num=5, aggregation_output_channels=16, aggregation_method="multiinput", input_mode="GRG", backbone_name="cspdarknet53",
     # Add_name="as_1021_1", model_name="FB_object_detect_model.pth",
     # scale=80.
 
-    fb_detector = FB_detector(raw_image_shape=raw_image_shape, model_input_size=model_input_size,
-                                input_img_num=input_img_num, aggregation_output_channels=aggregation_output_channels,
-                                aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
-                                abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
+    fb_detector = FB_detector(model_input_size=model_input_size,
+                              input_img_num=input_img_num, aggregation_output_channels=aggregation_output_channels,
+                              aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
+                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
 
 
-    label_path = opt.data_label_path + "val/" #.xlm label file path
+    label_path = opt.data_path + "val/labels/" #.xlm label file path
 
-    video_path = opt.video_path
+    video_path = opt.data_path + "val/video/"
 
     continus_num = input_img_num
     
@@ -94,12 +93,14 @@ if __name__ == "__main__":
                 image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
                 image_q.put(image)
                 image_shape = np.array(np.shape(image)[0:2]) # image size is 1280,720; image array's shape is 720,1280
+                # print("image_shape:")
+                # print(image_shape)
                 if frame_id >= continus_num:
 
                     exist_label = False
                     ### The output of first stage is start from continus_num-int(continus_num/2) frame.
-                    # frame_id_str = "%05d" % int(frame_id-int(continus_num/2))
-                    frame_id_str = "%05d" % int((frame_id-1)-int(continus_num/2)) #The frame id in dataset start from 0, but this script start from 1.
+                    # frame_id_str = "%06d" % int(frame_id-int(continus_num/2))
+                    frame_id_str = "%06d" % int((frame_id-1)-int(continus_num/2)) #The frame id in dataset start from 0, but this script start from 1.
                     label_name = video_name.split(".")[0] + "_" + frame_id_str + ".xml"
                     if label_name in label_name_list:
                         exist_label = True
@@ -111,7 +112,7 @@ if __name__ == "__main__":
                         continue
                     _, model_input = GetMiddleImg_ModelInput(image_q, model_input_size=model_input_size, continus_num=continus_num, input_mode=input_mode)
                     _ = image_q.get()
-                    outputs = fb_detector.detect_image(model_input)
+                    outputs = fb_detector.detect_image(model_input, raw_image_shape=image_shape)
 
                     obj_result_list = []
                     for output in outputs[0]: ###

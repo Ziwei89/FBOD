@@ -83,7 +83,7 @@ class CustomDataset(Dataset):
         first_img_num = int(first_img_num_str)
         images = []
         for num in range(first_img_num, first_img_num + self.frame_num):
-            num_str = "%05d" % int(num)
+            num_str = "%06d" % int(num)
             img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
             image_full_name = os.path.join(self.image_path,img_name)
             image = cv2.imread(image_full_name)
@@ -327,7 +327,7 @@ class CustomDataset_multi_head(Dataset):
         first_img_num = int(first_img_num_str)
         images = []
         for num in range(first_img_num, first_img_num + self.frame_num):
-            num_str = "%05d" % int(num)
+            num_str = "%06d" % int(num)
             img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
             image_full_name = os.path.join(self.image_path,img_name)
             image = cv2.imread(image_full_name)
@@ -627,10 +627,10 @@ def targets_to_labels(targets, output_size, num_classes, bs):
 if __name__ == '__main__':
     image_size = (672,384)
     input_mode = "RGR"
-    continues_num=5
+    continues_num=1
     assign_method="binary_assign"
     dataset_image_path = "../../../dataset_image/FlyingBird/train/"
-    data = open("./img_label_five_continuous_difficulty_train.txt").readlines()
+    data = open("./img_label_one_continuous_difficulty_train_raw.txt").readlines()
     #################LOC
 
     stride = 2

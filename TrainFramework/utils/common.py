@@ -23,7 +23,7 @@ def list_allisNone(listobj):
             return False
     return True
 
-def load_data(line, image_path, frame_num, image_size):
+def load_data(line, image_path, frame_num):
     """line of train_lines was saved as 'image name, label'"""
     line =  line.split()
     first_img_name = line[0]
@@ -31,17 +31,15 @@ def load_data(line, image_path, frame_num, image_size):
     first_img_num = int(first_img_num_str)
     images = []
     for num in range(first_img_num, first_img_num + frame_num):
-        num_str = "%05d" % int(num)
+        num_str = "%06d" % int(num)
         img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
         image_full_name = os.path.join(image_path,img_name)
         image = cv2.imread(image_full_name)
         images.append(image)
     if  line[1:][0] == "None":
         bboxes = np.array([])
-        # images = DataAug.Resize(image_size, False)(np.copy(images), np.copy(bboxes))
     else:
         bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
-        # images, bboxes = DataAug.Resize(image_size, True)(np.copy(images), np.copy(bboxes))
     return images, bboxes, first_img_name
 
 # np.set_printoptions(threshold=np.inf)

@@ -36,11 +36,8 @@ class opts(object):
         self.parser.add_argument('--Batch_size', default=8, type=int,
                             help='Batch_size: The size of batch.')
         
-        self.parser.add_argument('--data_image_path', default="../../dataset_image/FlyingBird/", type=str,
-                            help='data_image_path: The path of the image in dataset.')
-        
-        self.parser.add_argument('--data_label_path', default="../data/labels/", type=str,
-                            help='data_label_path: The path of the label in dataset.')
+        self.parser.add_argument('--data_path', default="../../dataset/FlyingBird/", type=str,
+                            help='data_path: The path of the dataset.')
         
         self.parser.add_argument('--pretrain_model_path', default="logs/non.pth", type=str,
                             help='pretrain_model_path: the pretrain model to speed train.')
@@ -48,9 +45,6 @@ class opts(object):
         ######### for test
         self.parser.add_argument('--model_name', default="FB_object_detect_model.pth", type=str,
                             help='model_name: The model name for loade.')
-        
-        self.parser.add_argument('--video_path', default="../../FBOD-BSPL/dataset/val/videos/", type=str,
-                            help='video_path: The video path.')
         
         self.parser.add_argument('--video_name', default="bird_2.mp4", type=str,
                             help='video_name: The vido name for testing.')

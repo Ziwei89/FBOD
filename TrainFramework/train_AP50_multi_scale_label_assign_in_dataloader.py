@@ -37,13 +37,8 @@ def get_lr(optimizer):
         return param_group['lr']
 
 class LablesToResults(object):
-    def __init__(self, batch_size, model_input_size=(384,672), image_size=(720, 1280)):#h,w
+    def __init__(self, batch_size):#h,w
         self.batch_size = batch_size
-        self.resize_ratio = min(model_input_size[0] / image_size[0], model_input_size[1] / image_size[1])
-        resized_image_shape = (image_size[0]*self.resize_ratio, image_size[1]*self.resize_ratio)
-
-        self.offset_top = (model_input_size[0] - resized_image_shape[0])/2
-        self.offset_left = (model_input_size[1] - resized_image_shape[1])/2
 
     def covert(self, labels_list, iteration): # TO Raw image size
         label_obj_list = []
@@ -51,8 +46,6 @@ class LablesToResults(object):
             labels = labels_list[batch_id]
             if labels.size==0:
                 continue
-            labels[:,[0, 2]] = (labels[:,[0, 2]] - self.offset_left) / self.resize_ratio
-            labels[:,[1, 3]] = (labels[:,[1, 3]] - self.offset_top) / self.resize_ratio
             image_id = self.batch_size*iteration + batch_id
             for label in labels:
                 # class_id = label[4] + 1 ###Include background in this project, the label didn't include background classes.
@@ -242,16 +235,15 @@ if __name__ == "__main__":
 
     #-------------------------------#
     #-------------------------------#
-    raw_image_shape = (int(opt.raw_image_shape.split("_")[0]), int(opt.raw_image_shape.split("_")[1])) # H,W
     model_input_size = (int(opt.model_input_size.split("_")[0]), int(opt.model_input_size.split("_")[1])) # H,W
     
     Cuda = True
 
     train_annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_train.txt"
-    train_dataset_image_path = opt.data_image_path +  "train/"
+    train_dataset_image_path = opt.data_path + "train/images/"
     
     val_annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_val.txt"
-    val_dataset_image_path = opt.data_image_path +  "val/"
+    val_dataset_image_path = opt.data_path + "val/images/"
     #-------------------------------#
     # 
     #-------------------------------#
@@ -302,8 +294,8 @@ if __name__ == "__main__":
 
     # For calculating the AP50
     scale_max_list = [scale_min_max_list[0][1], scale_min_max_list[1][1], scale_min_max_list[2][1]]
-    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size, raw_image_shape=np.array(raw_image_shape), scale_max_list=scale_max_list)
-    labels_to_results = LablesToResults(batch_size=opt.Batch_size, image_size=np.array(raw_image_shape))
+    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size, scale_max_list=scale_max_list)
+    labels_to_results = LablesToResults(batch_size=opt.Batch_size)
 
     # # 0.2用于验证，0.8用于训练
     # val_split = 0.1

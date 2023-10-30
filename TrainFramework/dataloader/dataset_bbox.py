@@ -28,7 +28,7 @@ class CustomDataset(Dataset):
         first_img_num = int(first_img_num_str)
         images = []
         for num in range(first_img_num, first_img_num + self.frame_num):
-            num_str = "%05d" % int(num)
+            num_str = "%06d" % int(num)
             img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
             image_full_name = os.path.join(self.image_path,img_name)
             image = cv2.imread(image_full_name)
