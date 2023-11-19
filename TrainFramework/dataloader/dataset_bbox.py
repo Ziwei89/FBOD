@@ -10,15 +10,16 @@ from PIL import Image
 
 
 class CustomDataset(Dataset):
-    def __init__(self, train_lines, image_size, image_path, input_mode="GRG", continues_num=5):
+    def __init__(self, train_lines, image_size, image_path, input_mode="GRG", continues_num=5, data_augmentation=False):
         # input_mode: "RGB" or "GRG". "RGB" means all the image is rgb mode. "GRG" means that the middle image remains RGB,
         # and the others will be coverted to gray.
         self.train_lines = train_lines
         self.train_batches = len(train_lines)
+        self.image_size = image_size#(960,544)
         self.image_path = image_path
         self.input_mode = input_mode
         self.frame_num = continues_num
-        self.image_size = image_size#(960,544)
+        self.data_augmentation=data_augmentation
         
     def __load_data(self, line):
         """line of train_lines was saved as 'image name, label'"""
@@ -38,10 +39,13 @@ class CustomDataset(Dataset):
             images = DataAug.Resize((self.image_size[1], self.image_size[0]), False)(np.copy(images), np.copy(bboxes))
         else:
             bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
-            # images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
-            # images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
-            # images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
-            images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+            if self.data_augmentation == True:
+                images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
         return images, bboxes
 

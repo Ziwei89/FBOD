@@ -305,21 +305,22 @@ if __name__ == "__main__":
     #------------------------------------------------------#
     #------------------------------------------------------#
 
-    lr = 1e-3
+    lr = opt.lr
     Batch_size = opt.Batch_size
-    Freeze_Epoch = 0
-    # Freeze_Epoch = 85
-    Unfreeze_Epoch = 100
-    # Unfreeze_Epoch = 200
+    start_Epoch = opt.start_Epoch
+    lr = lr*((0.95)**start_Epoch)
+    end_Epoch = opt.end_Epoch
 
     optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
     
-    train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+    train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path,
+                               input_mode=opt.input_mode, continues_num=opt.input_img_num, data_augmentation=opt.data_augmentation)
     train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
     # train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
     
-    val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path, input_mode=opt.input_mode, continues_num=opt.input_img_num)
+    val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path,
+                             input_mode=opt.input_mode, continues_num=opt.input_img_num, data_augmentation=False)
     val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
     # val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
@@ -333,8 +334,8 @@ if __name__ == "__main__":
         param.requires_grad = True
 
     largest_AP_50=0
-    for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
-        train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,Unfreeze_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
+    for epoch in range(start_Epoch,end_Epoch):
+        train_loss, val_loss,largest_AP_50_record, AP_50 = fit_one_epoch(largest_AP_50,net,loss_func,epoch,epoch_size,epoch_size_val,train_dataloader,val_dataloader,end_Epoch,Cuda,save_model_dir, labels_to_results=labels_to_results, detect_post_process=detect_post_process)
         largest_AP_50 = largest_AP_50_record
         if (epoch+1)>=2:
             draw_curve_loss(epoch+1, train_loss.item(), val_loss.item(), log_pic_name_loss)

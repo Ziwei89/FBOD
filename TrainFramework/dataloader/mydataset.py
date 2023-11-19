@@ -57,15 +57,16 @@ def min_max_ref_point_index(bbox, output_feature, image_size):
 
 class CustomDataset(Dataset):
     def __init__(self, train_lines, image_size, image_path, input_mode="GRG", continues_num=5, classes_num=2,
-                       default_inner_proportion=0.7, default_guassion_value=0.3, stride=2, assign_method="guassian_assign"):
+                       default_inner_proportion=0.7, default_guassion_value=0.3, stride=2, assign_method="guassian_assign",
+                       data_augmentation=False):
         # input_mode: "RGB" or "GRG". "RGB" means all the image is rgb mode. "GRG" means that the middle image remains RGB,
         # and the others will be coverted to gray.
         self.train_lines = train_lines
         self.train_batches = len(train_lines)
+        self.image_size = image_size#(672,384)#w,h
         self.image_path = image_path
         self.input_mode = input_mode
         self.frame_num = continues_num
-        self.image_size = image_size#(672,384)#w,h
 
         self.classes_num = classes_num # include the background
         self.default_inner_proportion = default_inner_proportion
@@ -74,6 +75,8 @@ class CustomDataset(Dataset):
         self.out_feature_size = [self.image_size[0]/stride, self.image_size[1]/stride]  ## w,h
         self.size_per_ref_point = self.image_size[0]/self.out_feature_size[0]
         self.assign_method = assign_method
+
+        self.data_augmentation=data_augmentation
         
     def __load_data(self, line):
         """line of train_lines was saved as 'image name, label'"""
@@ -93,10 +96,13 @@ class CustomDataset(Dataset):
             images = DataAug.Resize((self.image_size[1], self.image_size[0]), False)(np.copy(images), np.copy(bboxes)) ## h,w
         else:
             bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
-            # images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
-            # images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
-            # images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
-            images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+            if self.data_augmentation == True:
+                images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
         # print(bboxes)
         return images, bboxes
@@ -303,21 +309,24 @@ def Distance(pointa,pointb):
 
 class CustomDataset_multi_head(Dataset):
     def __init__(self, train_lines, image_size, image_path, input_mode="GRG", continues_num=5, classes_num=2,
-                       default_inner_proportion=0.7, stride=[32,8,2], obj_maxsize_scale=[256.,80.,48.]): ##large medium small
+                       default_inner_proportion=0.7, stride=[32,8,2], obj_maxsize_scale=[256.,80.,48.], data_augmentation=False): ##large medium small
         # input_mode: "RGB" or "GRG". "RGB" means all the image is rgb mode. "GRG" means that the middle image remains RGB,
         # and the others will be coverted to gray.
         self.train_lines = train_lines
         self.train_batches = len(train_lines)
+        self.image_size = image_size#(672,384)#w,h
         self.image_path = image_path
         self.input_mode = input_mode
         self.frame_num = continues_num
-        self.image_size = image_size#(672,384)#w,h
+        
 
         self.classes_num = classes_num # include the background
         self.default_inner_proportion = default_inner_proportion
         self.out_feature_size = [[self.image_size[0]/s, self.image_size[1]/s] for s in stride]  ## w,h ##large medium small
         self.size_per_ref_point = [self.image_size[0]/obj[0] for obj in self.out_feature_size] ##large medium small
         self.obj_maxsize_scale = obj_maxsize_scale
+
+        self.data_augmentation=data_augmentation
 
     def __load_data(self, line):
         """line of train_lines was saved as 'image name, label'"""
@@ -337,10 +346,13 @@ class CustomDataset_multi_head(Dataset):
             images = DataAug.Resize((self.image_size[1], self.image_size[0]), False)(np.copy(images), np.copy(bboxes)) ## h,w
         else:
             bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
-            # images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
-            # images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
-            # images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
-            images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+            if self.data_augmentation == True:
+                images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
         # print(bboxes)
         return images, bboxes
@@ -626,11 +638,11 @@ def targets_to_labels(targets, output_size, num_classes, bs):
 
 if __name__ == '__main__':
     image_size = (672,384)
-    input_mode = "RGR"
-    continues_num=1
+    input_mode = "RGB"
+    continues_num=5
     assign_method="binary_assign"
-    dataset_image_path = "../../../dataset_image/FlyingBird/train/"
-    data = open("./img_label_one_continuous_difficulty_train_raw.txt").readlines()
+    dataset_image_path = "../../../dataset/FlyingBird/train/images/"
+    data = open("./img_label_five_continuous_difficulty_train.txt").readlines()
     #################LOC
 
     stride = 2

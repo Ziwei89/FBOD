@@ -175,7 +175,8 @@ class LossFunc(nn.Module): #
         # print(predict_GHC[predict_GHC>0.2])
         MSE_Loss = MSELoss(label_GHC, predict_GHC)
         neg_MSE_Loss = MSE_Loss * weight_neg
-        pos_MSE_Loss = (MSE_Loss * label_lamda) * weight_pos
+        # pos_MSE_Loss = (MSE_Loss * label_lamda) * weight_pos
+        pos_MSE_Loss = MSE_Loss * weight_pos
 
         GHC_loss = 0
         for b in range(bs):
@@ -198,7 +199,8 @@ class LossFunc(nn.Module): #
         ### Locate Loss
         ciou_loss = 1-box_ciou(predict_LOC, label_LOC)
         ###(bs, in_h, in_w)
-        ciou_loss = (ciou_loss.view(bs,in_h,in_w)) * label_lamda * weight_pos
+        # ciou_loss = (ciou_loss.view(bs,in_h,in_w)) * label_lamda * weight_pos
+        ciou_loss = ciou_loss.view(bs,in_h,in_w) * weight_pos
         LOC_loss = 0
         for b in range(bs):
             LOC_loss_per_batch = 0

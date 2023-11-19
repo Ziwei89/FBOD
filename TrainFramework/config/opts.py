@@ -3,8 +3,6 @@ import argparse
 class opts(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--raw_image_shape', default="720_1280", type=str,
-                            help='raw_image_shape: The input image shape h_w')
         
         self.parser.add_argument('--model_input_size', default="384_672", type=str,
                             help='model_input_size: The model input shape h_w')
@@ -39,8 +37,20 @@ class opts(object):
         self.parser.add_argument('--data_path', default="../../dataset/FlyingBird/", type=str,
                             help='data_path: The path of the dataset.')
         
+        self.parser.add_argument('--data_augmentation', default=False, type=bool,
+                            help='data_augmentation: Determin whether to augmentate the dataset.')
+        
         self.parser.add_argument('--pretrain_model_path', default="logs/non.pth", type=str,
                             help='pretrain_model_path: the pretrain model to speed train.')
+        
+        self.parser.add_argument('--lr', default=1e-3, type=float,
+                            help='lr: the learn rate.')
+        
+        self.parser.add_argument('--start_Epoch', default=0, type=int,
+                            help='start_Epoch: the start epoch.')
+        
+        self.parser.add_argument('--end_Epoch', default=100, type=int,
+                            help='start_Epoch: the end epoch.')
         
         ######### for test
         self.parser.add_argument('--model_name', default="FB_object_detect_model.pth", type=str,

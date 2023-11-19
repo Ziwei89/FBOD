@@ -60,7 +60,8 @@ if __name__ == "__main__":
         write_img, model_input= GetMiddleImg_ModelInput_for_MatImageList(images, model_input_size=model_input_size, continus_num=input_img_num, input_mode=input_mode)
         outputs = fb_detector.detect_image(model_input, raw_image_shape=raw_image_shape)
 
-        detect_bboxes = outputs[0][:,:4]
+        # detect_bboxes = outputs[0][:,:4]
+        detect_bboxes = outputs[0]
         print("detect_bboxes")
         print(detect_bboxes)
         print("bboxes")
