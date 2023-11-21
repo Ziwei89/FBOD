@@ -1,14 +1,18 @@
 # FBOD
-Flying bird object detection in surveillance video
-
-本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)
+Flying bird object detection in surveillance video method based on the characteristics of surveillance video bird  
+基于监控视频飞鸟特点的监控视频飞鸟目标检测方法  
+该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimerOTA动态标签策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
+<div align="center">
+  <img src="https://github.com/Ziwei89/FBOD/blob/master/Illustrative_Figure/framework_github.jpeg">
+</div>
+本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)
 
 # 项目应用步骤
 
 ## 1、克隆项目到本地
-
+```
 git clone https://github.com/Ziwei89/FBOD.git
-
+```
 ## 2、准备训练和测试数据
 
 可以使用labelImg对图片进行标注，得到xml文件。  
