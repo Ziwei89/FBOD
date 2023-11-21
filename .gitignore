@@ -1,4 +1,4 @@
-data/*
+dataset/*
 **/*.pyc
 **/*.mp4
 **/*.pth

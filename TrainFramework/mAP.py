@@ -147,7 +147,7 @@ if __name__ == "__main__":
                               abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
     
     annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[input_img_num] + "_continuous_difficulty.txt"
-    dataset_image_path = opt.data_path + "val/images/"
+    dataset_image_path = opt.data_root_path + "val/images/"
 
     # val_lines = open(annotation_path).readlines()
     # # # 0.1用于验证，0.9用于训练

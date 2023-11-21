@@ -34,8 +34,8 @@ class opts(object):
         self.parser.add_argument('--Batch_size', default=8, type=int,
                             help='Batch_size: The size of batch.')
         
-        self.parser.add_argument('--data_path', default="../../dataset/FlyingBird/", type=str,
-                            help='data_path: The path of the dataset.')
+        self.parser.add_argument('--data_root_path', default="../../dataset/FlyingBird/", type=str,
+                            help='data_root_path: The path of the dataset.')
         
         self.parser.add_argument('--data_augmentation', default=False, type=bool,
                             help='data_augmentation: Determin whether to augmentate the dataset.')
