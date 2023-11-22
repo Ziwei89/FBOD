@@ -1,5 +1,5 @@
 # FBOD
-Flying bird object detection in surveillance video method based on the characteristics of surveillance video bird  
+Flying Bird Object Detection in Surveillance Video Method Based on the Characteristics of Bird in Surveillance Video  
 基于监控视频飞鸟特点的监控视频飞鸟目标检测方法  
 该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimerOTA动态标签策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
 <div align="center">
@@ -8,7 +8,7 @@ Flying bird object detection in surveillance video method based on the character
 
 
 本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)  
-注意：项目中少量代码来源于其他工程或互联网，在此鸣谢。若需要特别指明或存在权力要求，请联系sun_zi_wei@my.swjtu.edu.cn。本项目可以用于学习和科研，不可用于商业行为。
+<font color=red>注意：</font>项目中少量代码来源于其他工程或互联网，在此鸣谢。若需要特别指明或存在权力要求，请联系sun_zi_wei@my.swjtu.edu.cn。本项目可以用于学习和科研，不可用于商业行为。
 
 # 项目应用步骤
 
@@ -95,7 +95,7 @@ Add_name                           #在相关记录文件(如模型保存文件�
 data_augmentation                  #是否在训练时使用数据增强
 start_Epoch                        #起始训练Epoch，一般用在加载训练过的模型继续训练时设置，它可以调整学习率以便接着训练
 ```
-**注意：这里训练脚本有4个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimerOTA(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。**
+**<font color=red>注意：</font>这里训练脚本有4个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimerOTA(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。**
 含有“multi_scale”的训练脚本表示，训练的模型输出是多尺度的(3个尺度)。
 训练的一个例子:  
 ```
