@@ -7,7 +7,8 @@ Flying bird object detection in surveillance video method based on the character
 </div>
 
 
-本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)
+本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)  
+注意：项目中少量代码来源于其他工程或互联网，在此鸣谢。若需要特别指明或存在权力要求，请联系sun_zi_wei@my.swjtu.edu.cn。本项目可以用于学习和科研，不可用于商业行为。
 
 # 项目应用步骤
 
@@ -20,10 +21,14 @@ git clone https://github.com/Ziwei89/FBOD.git
 可以使用labelImg对图片进行标注，得到xml文件。  
 标签文件中应包含目标边界框、目标类别以及目标的难度信息(在以后的项目中会用到目标的难度信息，在本项目中标注时不用考虑，相关代码会设置一个用不到的默认值)
 
-### 数据组织
+### (1) 数据组织
 ```  
 data_root_path/  
-               train/  
+               train/
+                     video/
+                           bird_1.mp4
+                           bird_2.mp4
+                           ...  
                      images/  
                            bird_1_000000.jpg  
                            bird_1_000001.jpg  
@@ -37,10 +42,11 @@ data_root_path/
                            bird_2_000000.xml
                            ...  
                val/  
+                     video/
                      images/  
                      labels/  
 ```  
-### 然后生成数据描述txt文件用于训练和测试(训练一个txt,测试一个txt)
+### (2) 然后生成数据描述txt文件用于训练和测试(训练一个txt,测试一个txt)
 数据描述txt文件的格式如下：  
 连续n帧图像的第一帧图像名字 *空格* 中间帧飞鸟目标信息  
 image_name x1,y1,x2,y2,cls,difficulty x1,y1,x2,y2,cls,difficulty  
@@ -61,11 +67,92 @@ python continuous_image_annotation.py \
        --input_img_num=5
 cd ../ #回到项目根目录
 ```
-运行该脚本后，将在TrainFrameword/dataloader/目录下生成两个txt文件，分别是img_label_five_continuous_difficulty_train_raw.txt和img_label_five_continuous_difficulty_val_raw.txt文件。这两个文件中的训练样本排列是顺序的，最好通过运行以下下脚本将其打乱：  
+运行该脚本后，将在TrainFramework/dataloader/目录下生成两个txt文件，分别是img_label_five_continuous_difficulty_train_raw.txt和img_label_five_continuous_difficulty_val_raw.txt文件。这两个文件中的训练样本排列是顺序的，最好通过运行以下下脚本将其打乱：  
 ```
-cd TrainFrameword/dataloader/
+cd TrainFramework/dataloader/
 python shuffle_txt_lines.py \
        --input_img_num=5
 cd ../../ #回到项目根目录
 ```
-运行该脚本后，将在TrainFrameword/dataloader/目录下生成img_label_five_continuous_difficulty_train.txt和img_label_five_continuous_difficulty_val.txt两个文件。
+运行该脚本后，将在TrainFramework/dataloader/目录下生成img_label_five_continuous_difficulty_train.txt和img_label_five_continuous_difficulty_val.txt两个文件。
+### (3) 准备类别txt文件
+在TrainFramework/目录下创建model_data文件夹，然后再在TrainFramework/model_data/目录下创建名为classes.txt的文件，该文件中记录类别,如：
+```
+bird
+```
+
+## 3、训练飞鸟目标检测模型
+在模型训练时，需要使用命令行参数形式进行传参。所以的可设置参数均定义在TrainFramework/config/opts.py文件中(包括训练和测试所需要的参数)，这些参数均有默认值，可以不设置。  
+部分参数解释如下(其他参数较为通用，在设置时请参考TrainFramework/config/opts.py文件)：  
+```
+input_img_num                      #一次输入模型中，连续视频图像的帧数
+input_mode                         #输入视频帧图像的颜色模式，提供两种模式，一种是所有帧均为RGB，另一种仅仅中间帧为RGB，而其他帧为灰度图像
+aggregation_method                 #连续n帧图像特征聚合方式
+aggregation_output_channels        #连续n帧视频图像经过特征聚合后输出的通道数(可以根据输入连续帧数适当进行调整)
+fusion_method                      #浅层特征层和深层特征层融合方式
+assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign)、中心高斯(guassian_assign)、SimerOTA(auto_assign)
+Add_name                           #在相关记录文件(如模型保存文件夹或训练记录图片)，增加后缀
+data_augmentation                  #是否在训练时使用数据增强
+start_Epoch                        #起始训练Epoch，一般用在加载训练过的模型继续训练时设置，它可以调整学习率以便接着训练
+```
+注意：这里训练脚本有4个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimerOTA(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。  
+含有“multi_scale”的训练脚本表示，训练的模型输出是多尺度的(3个尺度)。
+训练的一个例子:  
+```
+cd TrainFramework
+python3 train_AP50.py \
+        --model_input_size=384_672 \
+        --input_img_num=5 \
+        --input_mode=RGB \
+        --aggregation_method=relatedatten \
+        --backbone_name=cspdarknet53 \
+        --fusion_method=concat \
+        --assign_method=auto_assign \
+        --Batch_size=8 \
+        --data_root_path=../dataset/FlyingBird/ \
+        --data_augmentation=True \
+        --Add_name=20230822
+cd ../ #回到项目根目录
+```
+训练时，程序将在TrainFramework/目录下创建一个logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/的目录，该目录会保存一些训练模型。同时，会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_loss_aa_20230822.jpg的图像用于记录训练过程的loss，训练到30个epoch后，还会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_loss_ap50_20230822.jpg的图像用于记录后续模型的AP50性能指标。  
+
+## 4、测试和评价飞鸟目标检测模型
+在运行测试和评价脚本时，要保持命令行参数与训练时一致(不用包括训练特有的如Batch_size等参数，需要特别增加模型名字的参数(应为保存模型的文件夹下有多个模型))，否则脚本将报无法找到模型的错误。
+几个与上述训练对应的例子(均是运行测试集中的数据)：
+
+测试检测图片(连续n帧图片输入)：  
+```
+cd TrainFramework
+python3 predict_for_image.py \
+        --model_input_size=384_672 \
+        --input_img_num=5 \
+        --input_mode=RGB \
+        --aggregation_method=relatedatten \
+        --backbone_name=cspdarknet53 \
+        --fusion_method=concat \
+        --assign_method=auto_assign \
+        --data_root_path=../dataset/FlyingBird/ \
+        --Add_name=20230822 \
+        --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
+cd ../ #回到项目根目录
+```
+输出图片在TrainFramework/test_output/目录下。 运行过程中，通过终端输出提示，是否继续测试下一张图像(除按键q外的其他按键)，或者退出测试(按键q)。 
+
+测试检测视频(注意：待检测视频存放在$data_root_path/val/video/目录下)：  
+```
+cd TrainFramework
+python3 predict_for_video.py \
+        --model_input_size=384_672 \
+        --input_img_num=5 \
+        --input_mode=RGB \
+        --aggregation_method=relatedatten \
+        --backbone_name=cspdarknet53 \
+        --fusion_method=concat \
+        --assign_method=auto_assign \
+        --data_root_path=../dataset/FlyingBird/ \
+        --Add_name=20230822 \
+        --model_name=FB_object_detect_model.pth \
+        --video_name=bird_2.mp4
+cd ../ #回到项目根目录
+```
+输出视频在TrainFramework/test_output/目录下。 
