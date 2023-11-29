@@ -120,7 +120,7 @@ class getTargets(nn.Module):
         targets.append(targets_loc)
         return targets
       
-    def __get_targets_with_dynamicLableAssign(self, predict_bbox, bboxes): ###
+    def __get_targets_with_dynamicLableAssign(self, predict_bbox, bboxes): ### SimOTA label assignment algorithm for Single-category task and Single-scale model (SimOTA-SS)
 
         FloatTensor = torch.cuda.FloatTensor if self.cuda else torch.FloatTensor
 
@@ -173,13 +173,14 @@ class getTargets(nn.Module):
             
             ############### 
             first_filter = np.array([0.]*int(self.out_feature_size[0])*int(self.out_feature_size[1]))
+            # Calculate the gt box range.
             min_wight_index, min_height_index, max_wight_index, max_height_index = min_max_ref_point_index(bbox,self.out_feature_size,self.model_input_size)
             for i in range(min_height_index, max_height_index+1):
                 for j in range(min_wight_index, max_wight_index+1):
                     first_filter[i*int(self.out_feature_size[0]) + j] = 1
             first_filter = first_filter.reshape(int(self.out_feature_size[1]), int(self.out_feature_size[0]))
             
-            iou_filter = iou * first_filter  # feature_h, feature_w  # first filter: gt box filter
+            iou_filter = iou * first_filter  # feature_h, feature_w  # first filter: gt box filter # Only iou values within the gt box region are kept.
 
             dynamic_k = np.sum(iou_filter)
             if dynamic_k < 1:
@@ -189,16 +190,17 @@ class getTargets(nn.Module):
             dropout_iou = dropout_iou.reshape(-1)
             sorted_iou = np.sort(dropout_iou)
             second_filter_index = iou_filter <= sorted_iou[-(dynamic_k+1)]
-            iou_filter[second_filter_index] = 0  # second filter: dynamic_k filter
+            iou_filter[second_filter_index] = 0  # second filter: dynamic_k filter # After sorting from largest to smallest, only the first dynamic_k iou values are retained.
             ##############
             # The positive anchor points of the object is more, 
             # the weight(lamda) is smaller. To balance the positive anchor points number of different object.
-            lamda = (1/dynamic_k)**(1/2)
+            lamda = (1/dynamic_k)**(1/2)  # Note: This parameter is not used in this version.
 
+            ### The anchor points in the gt box region are assigned labels.
             for i in range(min_height_index, max_height_index+1):
                 for j in range(min_wight_index, max_wight_index+1):
-                    if iou_filter[i][j] > 0:
-                        if (i,j) in position_iou_value_dic:
+                    if iou_filter[i][j] > 0: # Positive anchor point, need to assign label.
+                        if (i,j) in position_iou_value_dic: # The anchor point has been assigned label somewhere else.
                             if iou_filter[i][j] < position_iou_value_dic[(i,j)]:
                                 continue
                             elif iou_filter[i][j] == position_iou_value_dic[(i,j)]:
@@ -222,8 +224,8 @@ class getTargets(nn.Module):
                         points_label_map[(i*int(self.out_feature_size[0]) + j) * 6 + 3] = bbox[3] # o_h
                         
 
-                        points_label_map[(i*int(self.out_feature_size[0]) + j) * 6 + 4] = bbox[5] # difficult
-                        points_label_map[(i*int(self.out_feature_size[0]) + j) * 6 + 5] = lamda # lamda parameter
+                        points_label_map[(i*int(self.out_feature_size[0]) + j) * 6 + 4] = bbox[5] # difficult # Note: This parameter is not used in this version.
+                        points_label_map[(i*int(self.out_feature_size[0]) + j) * 6 + 5] = lamda # lamda parameter # Note: This parameter is not used in this version.
                     
                     else:# The point is not in positive anchor points.
                         class_label_map[(i*int(self.out_feature_size[0]) + j) * self.num_classes + 0] = 0

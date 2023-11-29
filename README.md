@@ -1,7 +1,7 @@
 # FBOD
 Flying Bird Object Detection in Surveillance Video Method Based on the Characteristics of Bird in Surveillance Video  
 基于监控视频飞鸟特点的监控视频飞鸟目标检测方法  
-该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimerOTA动态标签策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
+该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimerOTA动态标签分配策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
 <div align="center">
   <img src="https://github.com/Ziwei89/FBOD/blob/master/Illustrative_Figure/framework_github.jpeg">
 </div>
@@ -46,7 +46,7 @@ data_root_path/
                      images/  
                      labels/  
 ```  
-### (2) 然后生成数据描述txt文件用于训练和测试(训练一个txt,测试一个txt)
+### (2) 生成数据描述txt文件用于训练和测试(训练一个txt,测试一个txt)
 数据描述txt文件的格式如下：  
 连续n帧图像的第一帧图像名字 *空格* 中间帧飞鸟目标信息  
 image_name x1,y1,x2,y2,cls,difficulty x1,y1,x2,y2,cls,difficulty  
@@ -90,7 +90,8 @@ input_mode                         #输入视频帧图像的颜色模式，提�
 aggregation_method                 #连续n帧图像特征聚合方式
 aggregation_output_channels        #连续n帧视频图像经过特征聚合后输出的通道数(可以根据输入连续帧数适当进行调整)
 fusion_method                      #浅层特征层和深层特征层融合方式
-assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign)、中心高斯(guassian_assign)、SimerOTA(auto_assign)
+assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimerOTA(auto_assign, aa)
+pretrain_model_path                #预训练模型的路径。在使用auto_assign标签分配方式时，先采用静态的标签分配方式进行预训练，会取得更好的效果
 Add_name                           #在相关记录文件(如模型保存文件夹或训练记录图片)，增加后缀
 data_augmentation                  #是否在训练时使用数据增强
 start_Epoch                        #起始训练Epoch，一般用在加载训练过的模型继续训练时设置，它可以调整学习率以便接着训练
@@ -108,6 +109,7 @@ python train_AP50.py \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
         --assign_method=auto_assign \
+        --pretrain_model_path=logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_ga_20230822/FB_object_detect_model.pth \
         --Batch_size=8 \
         --data_root_path=../dataset/FlyingBird/ \
         --data_augmentation=True \
@@ -117,7 +119,7 @@ cd ../ #回到项目根目录
 训练时，程序将在TrainFramework/目录下创建一个logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/的目录，该目录会保存一些训练模型。同时，会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_loss_aa_20230822.jpg的图像用于记录训练过程的loss，训练到30个epoch后，还会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_loss_ap50_20230822.jpg的图像用于记录后续模型的AP50性能指标。  
 
 ## 4、测试和评价飞鸟目标检测模型
-在运行测试和评价脚本时，要保持命令行参数与训练时一致(不用包括训练特有的如Batch_size等参数，需要特别增加模型名字的参数(应为保存模型的文件夹下有多个模型))，否则脚本将报无法找到模型的错误。
+在运行测试和评价脚本时，要保持命令行参数与训练时一致(不用包括训练特有的如Batch_size等参数，需要特别增加模型名字的参数(因为保存模型的文件夹下有多个模型))，否则脚本将报无法找到模型的错误。
 几个与上述训练对应的例子(均是运行测试集中的数据)：
 
 * 测试检测图片(连续n帧图片输入)：  
@@ -157,7 +159,7 @@ cd ../ #回到项目根目录
 ```
 输出视频在TrainFramework/test_output/目录下。 
 
-* 模型评价(所有测试视频)：
+* 模型评价(运行所有测试视频)：
 ```
 cd TrainFramework
 python mAP_for_AllVideo.py \
@@ -173,7 +175,7 @@ python mAP_for_AllVideo.py \
         --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
 cd ../ #回到项目根目录
 ```
-* 模型评价(单个视频)：
+* 模型评价(运行单个视频)：
 ```
 cd TrainFramework
 python mAP_for_video.py \
