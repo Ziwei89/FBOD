@@ -167,9 +167,9 @@ class LossFunc(nn.Module): #
         ### bs, in_h, in_w
         # label_difficult = label_LOC_difficult_lamda[:,:,:,4] # bs,in_h,in_w
         ### bs, in_h, in_w
-        label_lamda = label_LOC_difficult_lamda[:,:,:,5] # bs,in_h,in_w
+        # label_lamda = label_LOC_difficult_lamda[:,:,:,5] # bs,in_h,in_w
 
-        ## Guassian Conf Loss
+        ## Conf Loss
         ## bs, in_h, in_w
         # print("predict_GHC[predict_GHC>0.2]")
         # print(predict_GHC[predict_GHC>0.2])
@@ -377,7 +377,7 @@ class LossFuncM(nn.Module): #
         ### bs, in_h, in_w
         # label_lamda = label_LOC_difficult_lamda[:,:,:,5] # bs,in_h,in_w
 
-        ## Guassian Conf Loss
+        ## Conf Loss
         ## bs, in_h, in_w
         # print("predict_GHC[predict_GHC>0.2]")
         # print(predict_GHC[predict_GHC>0.2])
