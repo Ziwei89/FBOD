@@ -1,5 +1,5 @@
 #-------------------------------------#
-#       对数据集进行训练
+#       Train the FBOD multi scale output model with static label assignment.
 #-------------------------------------#
 import os
 from config.opts import opts
@@ -23,7 +23,7 @@ import copy
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 #---------------------------------------------------#
-#   获得类
+#   get classes
 #---------------------------------------------------#
 def get_classes(classes_path):
     '''loads the classes'''

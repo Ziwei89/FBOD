@@ -52,6 +52,9 @@ class opts(object):
         self.parser.add_argument('--end_Epoch', default=100, type=int,
                             help='start_Epoch: the end epoch.')
         
+        self.parser.add_argument('--cross_vx', default="cross_v1", type=str,
+                            help='cross_vx: The Cross Validation data set')
+        
         ######### for test
         self.parser.add_argument('--model_name', default="FB_object_detect_model.pth", type=str,
                             help='model_name: The model name for loade.')

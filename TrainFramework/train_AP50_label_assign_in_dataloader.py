@@ -1,5 +1,5 @@
 #-------------------------------------#
-#       对数据集进行训练
+#       Train the FBOD model with static label assignment.
 #-------------------------------------#
 import os
 from config.opts import opts
@@ -22,7 +22,7 @@ from mAP import mean_average_precision
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 #---------------------------------------------------#
-#   获得类和先验框
+#   get classes
 #---------------------------------------------------#
 def get_classes(classes_path):
     '''loads the classes'''

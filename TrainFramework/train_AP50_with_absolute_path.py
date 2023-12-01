@@ -1,5 +1,5 @@
 #-------------------------------------#
-#       Train the FBOD model with dynamic label assignment.
+#       ### This file for Cross-validation experiments.
 #-------------------------------------#
 import os
 from config.opts import opts
@@ -16,7 +16,7 @@ from FB_detector import FB_Postprocess
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from utils.utils import FBObj
-from dataloader.dataset_bbox import CustomDataset, dataset_collate
+from dataloader.dataset_bbox import CustomDataset_with_absolute_path, dataset_collate
 from mAP import mean_average_precision
 import copy
 
@@ -215,16 +215,16 @@ if __name__ == "__main__":
     else:
         raise("Error! assign_method error.")
     
-    save_model_dir = "logs/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
+    save_model_dir = "logs/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
                              + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_"  + opt.Add_name + "/"
     os.makedirs(save_model_dir, exist_ok=True)
 
     ############### For log figure ################
-    log_pic_name_loss = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
+    log_pic_name_loss = "train_output_img/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
                                             + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "loss_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
-    log_pic_name_ap50 = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
+    log_pic_name_ap50 = "train_output_img/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
                                             + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "ap50_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
-    os.makedirs("train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
+    os.makedirs("train_output_img/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
     ################################################
 
     #-------------------------------#
@@ -233,11 +233,9 @@ if __name__ == "__main__":
     
     Cuda = True
 
-    train_annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_train.txt"
-    train_dataset_image_path = opt.data_root_path + "train/images/"
-    
-    val_annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_val.txt"
-    val_dataset_image_path = opt.data_root_path + "val/images/"
+    train_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_train.txt"
+    val_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_test.txt"
+
     #-------------------------------#
     # 
     #-------------------------------#
@@ -314,12 +312,12 @@ if __name__ == "__main__":
     optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.95)
     
-    train_data = CustomDataset(train_lines, (model_input_size[1], model_input_size[0]), image_path=train_dataset_image_path,
+    train_data = CustomDataset_with_absolute_path(train_lines, (model_input_size[1], model_input_size[0]),
                                input_mode=opt.input_mode, continues_num=opt.input_img_num, data_augmentation=opt.data_augmentation)
     train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
     # train_dataloader = DataLoader(train_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
     
-    val_data = CustomDataset(val_lines, (model_input_size[1], model_input_size[0]), image_path=val_dataset_image_path,
+    val_data = CustomDataset_with_absolute_path(val_lines, (model_input_size[1], model_input_size[0]),
                              input_mode=opt.input_mode, continues_num=opt.input_img_num, data_augmentation=False)
     val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True, collate_fn=dataset_collate)
     # val_dataloader = DataLoader(val_data, batch_size=Batch_size, shuffle=True, num_workers=4, pin_memory=True)
