@@ -233,8 +233,8 @@ if __name__ == "__main__":
     
     Cuda = True
 
-    train_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_train.txt"
-    val_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_test.txt"
+    train_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_difficulty_train.txt"
+    val_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_difficulty_val.txt"
 
     #-------------------------------#
     # 
