@@ -187,7 +187,7 @@ def draw_curve_loss(epoch, train_loss, test_loss, pic_name):
     x_epoch.append(int(epoch))
     ax0.plot(x_epoch, record_loss['train_loss'], 'b', label='train')
     ax0.plot(x_epoch, record_loss['test_loss'], 'r', label='val')
-    if epoch == 1:
+    if epoch == 2:
         ax0.legend()
     fig.savefig(pic_name)
 ########============================================================########

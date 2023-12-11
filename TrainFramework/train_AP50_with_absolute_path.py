@@ -183,7 +183,7 @@ def draw_curve_loss(epoch, train_loss, test_loss, pic_name):
     x_epoch.append(int(epoch))
     ax0.plot(x_epoch, record_loss['train_loss'], 'b', label='train')
     ax0.plot(x_epoch, record_loss['test_loss'], 'r', label='val')
-    if epoch == 1:
+    if epoch == 2:
         ax0.legend()
     fig.savefig(pic_name)
 ########============================================================########
@@ -233,8 +233,8 @@ if __name__ == "__main__":
     
     Cuda = True
 
-    train_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_difficulty_train.txt"
-    val_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_continous_num] + "_continuous_difficulty_val.txt"
+    train_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_train.txt"
+    val_annotation_path = "./dataloader/" + opt.cross_vx + "/img_label_" + num_to_english_c_dic[opt.input_img_num] + "_continuous_difficulty_val.txt"
 
     #-------------------------------#
     # 

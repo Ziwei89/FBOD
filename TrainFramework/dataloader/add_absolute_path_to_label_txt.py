@@ -1,8 +1,8 @@
 
 num_to_chinese_c_dic = {1:"one", 3:"three", 5:"five", 7:"seven", 9:"nine", 11:"eleven"}
 continuous_img_num=5
-train_absolute_path = "/home/ziwei/ziweiwork/dataset/FlyingBird/train/"
-test_absolute_path = "/home/ziwei/ziweiwork/dataset/FlyingBird/val/"
+train_absolute_path = "/home/ziwei/ziweiwork/dataset/FlyingBird/train/images/"
+test_absolute_path = "/home/ziwei/ziweiwork/dataset/FlyingBird/val/images/"
 
 if __name__ == '__main__':
     train_img_label_txt_file_all = "img_label_" + num_to_chinese_c_dic[continuous_img_num] + "_continuous_difficulty_all_raw.txt"
