@@ -93,6 +93,13 @@ class CustomDataset(Dataset):
             images.append(image)
         if  line[1:][0] == "None":
             bboxes = np.array([])
+            if self.data_augmentation == True:
+                images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
+                images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
             images = DataAug.Resize((self.image_size[1], self.image_size[0]), False)(np.copy(images), np.copy(bboxes)) ## h,w
         else:
             bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
@@ -604,13 +611,13 @@ def targets_to_labels(targets, output_size, num_classes, bs):
     in_h = output_size[1]
     in_w = output_size[0]
 
-    label_GHC_CLS = targets[0] #bs*in_h,in_w*c  c=num_classes(Include background)
-    label_GHC_CLS = label_GHC_CLS.reshape(bs,in_h,in_w,-1) # bs,in_h,in_w,c
+    label_CONF_CLS = targets[0] #bs*in_h,in_w*c  c=num_classes(Include background)
+    label_CONF_CLS = label_CONF_CLS.reshape(bs,in_h,in_w,-1) # bs,in_h,in_w,c
     ### bs, in_h, in_w
-    label_GHC = np.sum(label_GHC_CLS[:,:,:,1:], axis=3) # bs, in_h, in_w ## Guassian Heat Conf
-    print(label_GHC[label_GHC>0])
+    label_CONF = np.sum(label_CONF_CLS[:,:,:,1:], axis=3) # bs, in_h, in_w ## Conf
+    print(label_CONF[label_CONF>0])
 
-    label_CLS_weight =  np.ceil(label_GHC_CLS) # bs,in_h,in_w,c
+    label_CLS_weight =  np.ceil(label_CONF_CLS) # bs,in_h,in_w,c
     weight_neg = label_CLS_weight[:,:,:,:1] # bs,in_h,in_w,c(c = 1)
     if num_classes > 2:
         weight_non_ignore = np.sum(label_CLS_weight,axis=3).unsqueeze(3)
@@ -634,7 +641,7 @@ def targets_to_labels(targets, output_size, num_classes, bs):
     ### bs, in_h, in_w
     label_lamda = label_LOC_difficult_lamda[:,:,:,5] # bs,in_h,in_w
 
-    return label_GHC, weight_neg, weight_pos, label_LOC, label_difficult, label_lamda
+    return label_CONF, weight_neg, weight_pos, label_LOC, label_difficult, label_lamda
 
 if __name__ == '__main__':
     image_size = (672,384)
@@ -667,13 +674,13 @@ if __name__ == '__main__':
         else:
             images = datasetImgTocv2Mat_GRG(image_datas[0], continues_num)
     
-        label_GHC, weight_neg, weight_pos, label_LOC, label_difficult, label_lamda = targets_to_labels(targets, (in_w, in_h), 2, batch_size)
+        label_CONF, weight_neg, weight_pos, label_LOC, label_difficult, label_lamda = targets_to_labels(targets, (in_w, in_h), 2, batch_size)
         label_difficult = label_difficult * weight_pos
         label_lamda = label_lamda * weight_pos
         for bs in range(batch_size):
             test_img = np.full((image_size[1],image_size[0],3), 255)
             test_img = test_img.astype(np.uint8)
-            draw_heatmap(test_img, label_GHC[bs], (image_size[1],image_size[0]))
+            draw_heatmap(test_img, label_CONF[bs], (image_size[1],image_size[0]))
             cv2.imwrite("./test_output_img/heatmapimg_{}.jpg".format(bs), test_img)
 
             label_points = label_LOC[bs]

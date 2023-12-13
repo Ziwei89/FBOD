@@ -42,6 +42,27 @@ def load_data(line, image_path, frame_num):
         bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
     return images, bboxes, first_img_name
 
+def load_data_resize(line, image_path, frame_num, model_input_size):
+    """line of train_lines was saved as 'image name, label'"""
+    line =  line.split()
+    first_img_name = line[0]
+    first_img_num_str = first_img_name.split(".")[0].split("_")[-1]
+    first_img_num = int(first_img_num_str)
+    images = []
+    for num in range(first_img_num, first_img_num + frame_num):
+        num_str = "%06d" % int(num)
+        img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
+        image_full_name = os.path.join(image_path,img_name)
+        image = cv2.imread(image_full_name)
+        images.append(image)
+    if  line[1:][0] == "None":
+        bboxes = np.array([])
+        images = DataAug.Resize((model_input_size[1], model_input_size[0]), False)(np.copy(images), np.copy(bboxes))
+    else:
+        bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
+        images, bboxes = DataAug.Resize((model_input_size[1], model_input_size[0]), True)(np.copy(images), np.copy(bboxes))
+    return images, bboxes, first_img_name
+
 # np.set_printoptions(threshold=np.inf)
 # This function is different from obj detection stage.
 def CropImageList_Im2Cv(image_list, position):

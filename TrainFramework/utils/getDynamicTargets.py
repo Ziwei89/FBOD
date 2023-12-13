@@ -66,8 +66,8 @@ class getTargets(nn.Module):
 
     # def forward(self, batch_size, bboxes_bs):
     def forward(self, input, bboxes_bs):
-        # input is a [GHC, CLS, LOC] list with 'bs,c,h,w' format tensor.
-        # bboxes is a bs list with 'n,c' tensor, n is the num of box.
+        # input is a [CONF, LOC] list with 'bs,c,h,w' format tensor.
+        # bboxes is a bs list with 'bs,n,c' tensor, n is the num of box.
         targets = [] ### targets is a list wiht 2 members, each is a 'bs,h,w,c' format tensor(cls and bbox).
         targets_cls = []
         targets_loc = []
@@ -119,8 +119,9 @@ class getTargets(nn.Module):
         targets.append(targets_cls)
         targets.append(targets_loc)
         return targets
-      
-    def __get_targets_with_dynamicLableAssign(self, predict_bbox, bboxes): ### SimOTA label assignment algorithm for Single-category task and Single-scale model (SimOTA-SS)
+    
+    ########SimOTA-OC  
+    def __get_targets_with_dynamicLableAssign(self, predict_bbox, bboxes): ### SimOTA label assignment algorithm for One-Category task and Single-scale model (SimOTA-OC)
 
         FloatTensor = torch.cuda.FloatTensor if self.cuda else torch.FloatTensor
 

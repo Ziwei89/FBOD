@@ -77,7 +77,7 @@ class LossFunc(nn.Module): #
         if self.gettargets:
             targets = self.get_targets(input, targets) ### targets is a list wiht 2 members, each is a 'bs,in_h,in_w,c' format tensor(cls and bbox).
 
-        # input is a list with with 2 members(GHC and LOC), each member is a 'bs,c,in_h,in_w' format tensor).
+        # input is a list with with 2 members(CONF and LOC), each member is a 'bs,c,in_h,in_w' format tensor).
         # print("input[0].size()")
         # print(input[0].size())
         # print("input[1].size()")
@@ -88,14 +88,14 @@ class LossFunc(nn.Module): #
 
         # 2,bs,c,in_h,in_w -> 2,bs,in_h,in_w,c (a list with 2 members, each member is a 'bs,in_h,in_w,c' format tensor).
 
-        # Branch for task, there are 2 tasks, that is GHC(Gassian Heatmap Conf), and LOC(LOCation).
+        # Branch for task, there are 2 tasks, that is CONF(Conf), and LOC(LOCation).
         # To get 3D tensor 'bs, in_h, in_w' or 4D tensor 'bs, in_h, in_w, c'.
-        #################GHC
+        #################CONF
         # 
-        predict_GHC = input[0].type(FloatTensor) #bs,c,in_h,in_w  c=1
-        predict_GHC = predict_GHC.view(bs,in_h,in_w) #bs,in_h,in_w
+        predict_CONF = input[0].type(FloatTensor) #bs,c,in_h,in_w  c=1
+        predict_CONF = predict_CONF.view(bs,in_h,in_w) #bs,in_h,in_w
         ### bs, in_h, in_w
-        predict_GHC = torch.sigmoid(predict_GHC)
+        predict_CONF = torch.sigmoid(predict_CONF)
 
 
         #################LOC
@@ -131,18 +131,18 @@ class LossFunc(nn.Module): #
         # targets is a list wiht 2 members, each is a 'bs*in_h,in_w*c' format tensor(cls and bbox).
         # 2,bs*c*in_h,in_w -> 3,bs,in_h,in_w,c (a list with 3 members, each member is a 'bs,in_h,in_w,c' format tensor).
 
-        #################GHC_CLS
+        #################CONF_CLS
         ### bs, in_h, in_w, c(c=num_classes(Include background))
-        label_GHC_CLS = targets[0].type(FloatTensor) #bs*in_h,in_w*c  c=num_classes(Include background)
-        label_GHC_CLS = label_GHC_CLS.view(bs,in_h,in_w,-1) # bs,in_h,in_w,c
+        label_CONF_CLS = targets[0].type(FloatTensor) #bs*in_h,in_w*c  c=num_classes(Include background)
+        label_CONF_CLS = label_CONF_CLS.view(bs,in_h,in_w,-1) # bs,in_h,in_w,c
         ### bs, in_h, in_w
-        # print("label_GHC_CLS[:,:,:,1:].size()")
-        # print(label_GHC_CLS[:,:,:,1:].size())
-        label_GHC = torch.sum(label_GHC_CLS[:,:,:,1:], dim=3) # bs, in_h, in_w ## Guassian Heat Conf
-        # print("label_GHC.size()")
-        # print(label_GHC.size())
+        # print("label_CONF_CLS[:,:,:,1:].size()")
+        # print(label_CONF_CLS[:,:,:,1:].size())
+        label_CONF = torch.sum(label_CONF_CLS[:,:,:,1:], dim=3) # bs, in_h, in_w ## Conf
+        # print("label_CONF.size()")
+        # print(label_CONF.size())
 
-        label_CLS_weight =  torch.ceil(label_GHC_CLS) # bs,in_h,in_w,c
+        label_CLS_weight =  torch.ceil(label_CONF_CLS) # bs,in_h,in_w,c
         weight_neg = label_CLS_weight[:,:,:,:1] # bs,in_h,in_w,c(c = 1)
         if self.num_classes > 2:
             weight_non_ignore = torch.sum(label_CLS_weight,3).unsqueeze(3)
@@ -171,16 +171,16 @@ class LossFunc(nn.Module): #
 
         ## Conf Loss
         ## bs, in_h, in_w
-        # print("predict_GHC[predict_GHC>0.2]")
-        # print(predict_GHC[predict_GHC>0.2])
-        MSE_Loss = MSELoss(label_GHC, predict_GHC)
+        # print("predict_CONF[predict_CONF>0.2]")
+        # print(predict_CONF[predict_CONF>0.2])
+        MSE_Loss = MSELoss(label_CONF, predict_CONF)
         neg_MSE_Loss = MSE_Loss * weight_neg
         # pos_MSE_Loss = (MSE_Loss * label_lamda) * weight_pos
         pos_MSE_Loss = MSE_Loss * weight_pos
 
-        GHC_loss = 0
+        CONF_loss = 0
         for b in range(bs):
-            GHC_loss_per_batch = 0
+            CONF_loss_per_batch = 0
             ### in_h, in_w
             if bs_obj_nums[b] != 0:
                 k = bs_obj_nums[b].cpu()
@@ -190,11 +190,11 @@ class LossFunc(nn.Module): #
                     topk = bs_neg_nums[b]
                 neg_MSE_Loss_topk_sum = torch.sum(torch.topk((neg_MSE_Loss[b]).view(-1), topk).values)
                 pos_MSE_Loss_sum = torch.sum(pos_MSE_Loss[b])
-                GHC_loss_per_batch = (neg_MSE_Loss_topk_sum + 10*pos_MSE_Loss_sum)/bs_obj_nums[b]
+                CONF_loss_per_batch = (neg_MSE_Loss_topk_sum + 10*pos_MSE_Loss_sum)/bs_obj_nums[b]
             else:
                 neg_MSE_Loss_topk_sum = torch.sum(torch.topk(neg_MSE_Loss[b], 20).values)
-                GHC_loss_per_batch = neg_MSE_Loss_topk_sum/10
-            GHC_loss += GHC_loss_per_batch
+                CONF_loss_per_batch = neg_MSE_Loss_topk_sum/10
+            CONF_loss += CONF_loss_per_batch
         
         ### Locate Loss
         ciou_loss = 1-box_ciou(predict_LOC, label_LOC)
@@ -210,7 +210,7 @@ class LossFunc(nn.Module): #
                 LOC_loss_per_batch = 0
             LOC_loss += LOC_loss_per_batch
 
-        total_loss = (10*GHC_loss + 100*LOC_loss) / bs
+        total_loss = (10*CONF_loss + 100*LOC_loss) / bs
         return total_loss
 
 ################################# For multi scale #################################################
@@ -272,7 +272,7 @@ class LossFuncM(nn.Module): #
         self.gettargets = gettargets
     
     def forward(self, input, targets_all):
-        # input is a list with with 2 members(GHC and LOC), each member is a 'bs,c,in_h,in_w' format tensor).
+        # input is a list with with 2 members(CONF and LOC), each member is a 'bs,c,in_h,in_w' format tensor).
         # print("input[0].size()")
         # print(input[0].size())
         # print("input[1].size()")
@@ -296,14 +296,14 @@ class LossFuncM(nn.Module): #
 
         # 2,bs,c,in_h,in_w -> 2,bs,in_h,in_w,c (a list with 2 members, each member is a 'bs,in_h,in_w,c' format tensor).
 
-        # Branch for task, there are 2 tasks, that is GHC(Gassian Heatmap Conf), and LOC(LOCation).
+        # Branch for task, there are 2 tasks, that is CONF(Gassian Heatmap Conf), and LOC(LOCation).
         # To get 3D tensor 'bs, in_h, in_w' or 4D tensor 'bs, in_h, in_w, c'.
-        #################GHC
+        #################CONF
         # 
-        predict_GHC = input[0].type(FloatTensor) #bs,c,in_h,in_w  c=1
-        predict_GHC = predict_GHC.view(bs,in_h,in_w) #bs,in_h,in_w
+        predict_CONF = input[0].type(FloatTensor) #bs,c,in_h,in_w  c=1
+        predict_CONF = predict_CONF.view(bs,in_h,in_w) #bs,in_h,in_w
         ### bs, in_h, in_w
-        predict_GHC = torch.sigmoid(predict_GHC)
+        predict_CONF = torch.sigmoid(predict_CONF)
 
 
         #################LOC
@@ -339,18 +339,18 @@ class LossFuncM(nn.Module): #
         # targets is a list wiht 2 members, each is a 'bs*in_h,in_w*c' format tensor(cls and bbox).
         # 2,bs*c*in_h,in_w -> 3,bs,in_h,in_w,c (a list with 3 members, each member is a 'bs,in_h,in_w,c' format tensor).
 
-        #################GHC_CLS
+        #################CONF_CLS
         ### bs, in_h, in_w, c(c=num_classes(Include background))
-        label_GHC_CLS = targets[0].type(FloatTensor) #bs*in_h,in_w*c  c=num_classes(Include background)
-        label_GHC_CLS = label_GHC_CLS.view(bs,in_h,in_w,-1) # bs,in_h,in_w,c
+        label_CONF_CLS = targets[0].type(FloatTensor) #bs*in_h,in_w*c  c=num_classes(Include background)
+        label_CONF_CLS = label_CONF_CLS.view(bs,in_h,in_w,-1) # bs,in_h,in_w,c
         ### bs, in_h, in_w
-        # print("label_GHC_CLS[:,:,:,1:].size()")
-        # print(label_GHC_CLS[:,:,:,1:].size())
-        label_GHC = torch.sum(label_GHC_CLS[:,:,:,1:], dim=3) # bs, in_h, in_w ## Guassian Heat Conf
-        # print("label_GHC.size()")
-        # print(label_GHC.size())
+        # print("label_CONF_CLS[:,:,:,1:].size()")
+        # print(label_CONF_CLS[:,:,:,1:].size())
+        label_CONF = torch.sum(label_CONF_CLS[:,:,:,1:], dim=3) # bs, in_h, in_w ## Guassian Heat Conf
+        # print("label_CONF.size()")
+        # print(label_CONF.size())
 
-        label_CLS_weight =  torch.ceil(label_GHC_CLS) # bs,in_h,in_w,c
+        label_CLS_weight =  torch.ceil(label_CONF_CLS) # bs,in_h,in_w,c
         weight_neg = label_CLS_weight[:,:,:,:1] # bs,in_h,in_w,c(c = 1)
         if self.num_classes > 2:
             weight_non_ignore = torch.sum(label_CLS_weight,3).unsqueeze(3)
@@ -379,15 +379,15 @@ class LossFuncM(nn.Module): #
 
         ## Conf Loss
         ## bs, in_h, in_w
-        # print("predict_GHC[predict_GHC>0.2]")
-        # print(predict_GHC[predict_GHC>0.2])
-        MSE_Loss = MSELoss(label_GHC, predict_GHC)
+        # print("predict_CONF[predict_CONF>0.2]")
+        # print(predict_CONF[predict_CONF>0.2])
+        MSE_Loss = MSELoss(label_CONF, predict_CONF)
         neg_MSE_Loss = MSE_Loss * weight_neg
         pos_MSE_Loss = MSE_Loss * weight_pos
 
-        GHC_loss = 0
+        CONF_loss = 0
         for b in range(bs):
-            GHC_loss_per_batch = 0
+            CONF_loss_per_batch = 0
             ### in_h, in_w
             if bs_obj_nums[b] != 0:
                 k = bs_obj_nums[b].cpu()
@@ -397,11 +397,11 @@ class LossFuncM(nn.Module): #
                     topk = bs_neg_nums[b]
                 neg_MSE_Loss_topk_sum = torch.sum(torch.topk((neg_MSE_Loss[b]).view(-1), topk).values)
                 pos_MSE_Loss_sum = torch.sum(pos_MSE_Loss[b])
-                GHC_loss_per_batch = (neg_MSE_Loss_topk_sum + 10*pos_MSE_Loss_sum)/bs_obj_nums[b]
+                CONF_loss_per_batch = (neg_MSE_Loss_topk_sum + 10*pos_MSE_Loss_sum)/bs_obj_nums[b]
             else:
                 neg_MSE_Loss_topk_sum = torch.sum(torch.topk(neg_MSE_Loss[b], 20).values)
-                GHC_loss_per_batch = neg_MSE_Loss_topk_sum/10
-            GHC_loss += GHC_loss_per_batch
+                CONF_loss_per_batch = neg_MSE_Loss_topk_sum/10
+            CONF_loss += CONF_loss_per_batch
         
         ### Locate Loss
         ciou_loss = 1-box_ciou(predict_LOC, label_LOC)
@@ -416,5 +416,5 @@ class LossFuncM(nn.Module): #
                 LOC_loss_per_batch = 0
             LOC_loss += LOC_loss_per_batch
 
-        total_loss = (10*GHC_loss + 100*LOC_loss) / bs
+        total_loss = (10*CONF_loss + 100*LOC_loss) / bs
         return total_loss

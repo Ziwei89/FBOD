@@ -84,21 +84,21 @@ class FB_boxdecoder(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        # input is a list with with 2 members(GHC and LOC), each member is a 'bs,c,h,w' format tensor).
+        # input is a list with with 2 members(CONF and LOC), each member is a 'bs,c,h,w' format tensor).
         bs = input[0].size(0)
         in_h = input[0].size(2) # in_h = model_input_size[0]/4 (stride = 4)
         in_w = input[0].size(3) # in_w
 
         # 2,bs,c,h,w -> 2,bs,h,w,c (a list with 2 members, each member is a 'bs,h,w,c' format tensor).
 
-        # Branch for task, there are 2 tasks, that is GHC(Gassian Heatmap Conf), and LOC(LOCation).
+        # Branch for task, there are 2 tasks, that is CONF(Conf), and LOC(LOCation).
         # To get 3D tensor 'bs, h, w' or 4D tensor 'bs, h, w, c'.
-        #################GHC
+        #################CONF
         # 
-        predict_GHC = input[0] #bs,c,h,w  c=1
-        predict_GHC = predict_GHC.view(bs,in_h,in_w) #bs,h,w
+        predict_CONF = input[0] #bs,c,h,w  c=1
+        predict_CONF = predict_CONF.view(bs,in_h,in_w) #bs,h,w
         ### bs, h, w
-        predict_GHC = torch.sigmoid(predict_GHC)
+        predict_CONF = torch.sigmoid(predict_CONF)
 
         #################LOC
         FloatTensor = torch.cuda.FloatTensor if self.cuda else torch.FloatTensor
@@ -122,27 +122,27 @@ class FB_boxdecoder(nn.Module):
         predict_LOC[..., 1] = predict_LOC[..., 1]*self.scale + ref_point_ys
         predict_LOC[..., 2] = predict_LOC[..., 2]*self.scale + ref_point_xs
         predict_LOC[..., 3] = predict_LOC[..., 3]*self.scale + ref_point_ys
-        # print("predict_GHC")
-        # print(predict_GHC)
+        # print("predict_CONF")
+        # print(predict_CONF)
 
-        GHC_mask = predict_GHC > self.score_threshold
-        # GHC_mask_test = predict_GHC > 0.0014
-        # print("predict_GHC[0][GHC_mask_test[0]]")
-        # print(predict_GHC[0][GHC_mask_test[0]])
+        CONF_mask = predict_CONF > self.score_threshold
+        # CONF_mask_test = predict_CONF > 0.0014
+        # print("predict_CONF[0][CONF_mask_test[0]]")
+        # print(predict_CONF[0][CONF_mask_test[0]])
 
         outputs = []
         for b in range(bs):
             ### For one batch
             ### 1 dim tensor  [n1] n1 is the numper of the obj.
-            predict_GHC_b = predict_GHC[b][GHC_mask[b]]
+            predict_CONF_b = predict_CONF[b][CONF_mask[b]]
             ### 2 dim tensor  [n1, 1] n1 is the numper of the obj.
-            predict_GHC_b = predict_GHC_b.unsqueeze(1)
+            predict_CONF_b = predict_CONF_b.unsqueeze(1)
 
             ### 2 dim tensor  [n1, 4] n1 is the numper of the obj.
-            predict_LOC_b = predict_LOC[b][GHC_mask[b]]
+            predict_LOC_b = predict_LOC[b][CONF_mask[b]]
 
             ### 2 dim tensor  [n3, 5] n3 is the numper of the obj.
-            detections = torch.concat([predict_LOC_b, predict_GHC_b], dim=1)
+            detections = torch.concat([predict_LOC_b, predict_CONF_b], dim=1)
 
             keep = nms(detections[:, :4], detections[:, 4], self.nms_thres)
             max_detections = detections[keep]
