@@ -342,17 +342,16 @@ class CustomDataset_multi_head(Dataset):
             images.append(image)
         if  line[1:][0] == "None":
             bboxes = np.array([])
-            images = DataAug.Resize((self.image_size[1], self.image_size[0]), False)(np.copy(images), np.copy(bboxes)) ## h,w
         else:
             bboxes = np.array([np.array(list(map(float, box.split(',')))) for box in line[1:]])
-            if self.data_augmentation == True:
-                images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
-                images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
-                images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
-                images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
-                images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
-                images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
-            images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
+        if self.data_augmentation == True:
+            images, bboxes = DataAug.RandomVerticalFilp()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.RandomHorizontalFilp()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.RandomCenterFilp()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
+        images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
         # print(bboxes)
         return images, bboxes
 

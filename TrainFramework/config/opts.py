@@ -62,6 +62,8 @@ class opts(object):
         self.parser.add_argument('--video_name', default="bird_2.mp4", type=str,
                             help='video_name: The vido name for testing.')
         
+        self.parser.add_argument('--video_full_path', default="./test.mp4", type=str,
+                            help='video_full_path: input the video with full path for predict.')
         
     def parse(self):
         opt = self.parser.parse_args()
