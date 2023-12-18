@@ -122,7 +122,7 @@ cd ../ #回到项目根目录
 在运行测试和评价脚本时，要保持命令行参数与训练时一致(不用包括训练特有的如Batch_size等参数，需要特别增加模型名字的参数(因为保存模型的文件夹下有多个模型))，否则脚本将报无法找到模型的错误。
 几个与上述训练对应的例子(均是运行测试集中的数据)：
 
-* 测试检测图片(连续n帧图片输入)：  
+* 测试检测测试集中的图片(连续n帧图片输入)，红框表示检测结果，绿色框表示GT：  
 ```
 cd TrainFramework
 python predict_for_image.py \
@@ -140,7 +140,7 @@ cd ../ #回到项目根目录
 ```
 输出图片在TrainFramework/test_output/目录下。 运行过程中，通过终端输出提示，是否继续测试下一张图像(除按键q外的其他按键)，或者退出测试(按键q)。 
 
-* 测试检测视频(注意：待检测视频存放在$data_root_path/val/video/目录下)：  
+* 测试检测测试集中的视频(注意：待检测视频存放在$data_root_path/val/video/目录下)，红框表示检测结果，绿色框表示GT： 
 ```
 cd TrainFramework
 python predict_for_video.py \
@@ -158,6 +158,24 @@ python predict_for_video.py \
 cd ../ #回到项目根目录
 ```
 输出视频在TrainFramework/test_output/目录下。 
+
+* 测试检测给定的视频(注意：需要给视频的全路径)，红框表示检测结果： 
+```
+cd TrainFramework
+python predict_for_video_with_video_full_path.py \
+        --model_input_size=384_672 \
+        --input_img_num=5 \
+        --input_mode=RGB \
+        --aggregation_method=relatedatten \
+        --backbone_name=cspdarknet53 \
+        --fusion_method=concat \
+        --assign_method=auto_assign \
+        --Add_name=20230822 \
+        --model_name=FB_object_detect_model.pth \
+        --video_full_path=./test.mp4
+cd ../ #回到项目根目录
+```
+输出视频在TrainFramework/test_output/目录下。predict_for_video.py和predict_for_video_with_video_full_path.py的区别是，前者检测的数据集中的视频(指定测试集中视频名字即可)，有标签信息，后者是用户指定的视频(需要给全部路径)。
 
 * 模型评价(运行所有测试视频)：
 ```
