@@ -67,7 +67,7 @@ python continuous_image_annotation.py \
        --input_img_num=5
 cd ../ #回到项目根目录
 ```
-运行该脚本后，将在TrainFramework/dataloader/目录下生成两个txt文件，分别是img_label_five_continuous_difficulty_train_raw.txt和img_label_five_continuous_difficulty_val_raw.txt文件。这两个文件中的训练样本排列是顺序的，最好通过运行以下下脚本将其打乱：  
+运行该脚本后，将在TrainFramework/dataloader/目录下生成两个txt文件，分别是img_label_five_continuous_difficulty_train_raw.txt和img_label_five_continuous_difficulty_val_raw.txt文件。这两个文件中的训练样本排列是顺序的，最好通过运行以下脚本将其打乱：  
 ```
 cd TrainFramework/dataloader/
 python shuffle_txt_lines.py \
@@ -90,13 +90,13 @@ input_mode                         #输入视频帧图像的颜色模式，提�
 aggregation_method                 #连续n帧图像特征聚合方式
 aggregation_output_channels        #连续n帧视频图像经过特征聚合后输出的通道数(可以根据输入连续帧数适当进行调整)
 fusion_method                      #浅层特征层和深层特征层融合方式
-assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimerOTA(auto_assign, aa)
+assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimOTA-OC(auto_assign, aa)
 pretrain_model_path                #预训练模型的路径。在使用auto_assign标签分配方式时，先采用静态的标签分配方式进行预训练，会取得更好的效果
 Add_name                           #在相关记录文件(如模型保存文件夹或训练记录图片)，增加后缀
 data_augmentation                  #是否在训练时使用数据增强
 start_Epoch                        #起始训练Epoch，一般用在加载训练过的模型继续训练时设置，它可以调整学习率以便接着训练
 ```
-**<font color=red>注意：</font>这里训练脚本有4个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimerOTA(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。**
+**<font color=red>注意：</font>这里训练脚本有4个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimOTA-OC(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。**
 含有“multi_scale”的训练脚本表示，训练的模型输出是多尺度的(3个尺度)。
 训练的一个例子:  
 ```
