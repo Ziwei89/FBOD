@@ -67,7 +67,10 @@ class RandomVerticalFilp(object):
             for img in imgs:
                 img = img[::-1, :, :]
                 images.append(img)
-            bboxes[:, 1], bboxes[:, 3] = h_img - bboxes[:, 3], h_img - bboxes[:, 1]
+            if len(bboxes) == 0:
+                bboxes = bboxes
+            else:
+                bboxes[:, 1], bboxes[:, 3] = h_img - bboxes[:, 3], h_img - bboxes[:, 1]
         else:
             images = imgs
         return images, bboxes
@@ -82,7 +85,10 @@ class RandomHorizontalFilp(object):
             for img in imgs:
                 img = img[:, ::-1, :]
                 images.append(img)
-            bboxes[:, 0], bboxes[:, 2] = w_img - bboxes[:, 2], w_img - bboxes[:, 0]
+            if len(bboxes) == 0:
+                bboxes = bboxes
+            else:
+                bboxes[:, 0], bboxes[:, 2] = w_img - bboxes[:, 2], w_img - bboxes[:, 0]
 
         else:
             images = imgs
@@ -98,8 +104,11 @@ class RandomCenterFilp(object):
             for img in imgs:
                 img = img[::-1, ::-1, :]
                 images.append(img)
-            bboxes[:, 0], bboxes[:, 2] = w_img - bboxes[:, 2], w_img - bboxes[:, 0]
-            bboxes[:, 1], bboxes[:, 3] = h_img - bboxes[:, 3], h_img - bboxes[:, 1]
+            if len(bboxes) == 0:
+                bboxes = bboxes
+            else:
+                bboxes[:, 0], bboxes[:, 2] = w_img - bboxes[:, 2], w_img - bboxes[:, 0]
+                bboxes[:, 1], bboxes[:, 3] = h_img - bboxes[:, 3], h_img - bboxes[:, 1]
         else:
             images = imgs
         return images, bboxes
@@ -111,7 +120,10 @@ class RandomCrop(object):
     def __call__(self, imgs, bboxes):
         if random.random() < self.p:
             h_img, w_img, _ = imgs[0].shape
-            max_bbox = [np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]
+            if len(bboxes) == 0:
+                max_bbox = [int(w_img/4), int(h_img/4), int(3*w_img/4), int(3*h_img/4)]
+            else:
+                max_bbox = [np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]
             max_l_trans = max_bbox[0]
             max_u_trans = max_bbox[1]
             max_r_trans = w_img - max_bbox[2]
@@ -124,8 +136,11 @@ class RandomCrop(object):
             for img in imgs:
                 img = img[crop_ymin : crop_ymax, crop_xmin : crop_xmax]
                 images.append(img)
-            bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - crop_xmin
-            bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - crop_ymin
+            if len(bboxes) == 0:
+                bboxes = bboxes
+            else:
+                bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - crop_xmin
+                bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - crop_ymin
         else:
             images = imgs
         return images, bboxes
@@ -160,8 +175,11 @@ class Resize(object):
 
         if self.correct_box:
             ################################xmin-ymax trans
-            bboxes[:, [0, 2]] = bboxes[:, [0, 2]] * resize_ratio + left
-            bboxes[:, [1, 3]] = bboxes[:, [1, 3]] * resize_ratio + top
+            if len(bboxes) == 0:
+                bboxes = bboxes
+            else:
+                bboxes[:, [0, 2]] = bboxes[:, [0, 2]] * resize_ratio + left
+                bboxes[:, [1, 3]] = bboxes[:, [1, 3]] * resize_ratio + top
             return images, bboxes
         return images
 
@@ -190,7 +208,10 @@ class Resize_padingBR(object):
 
         if self.correct_box:
             ################################xmin-ymax trans
-            bboxes[:, [0, 2]] = bboxes[:, [0, 2]] * resize_ratio
-            bboxes[:, [1, 3]] = bboxes[:, [1, 3]] * resize_ratio
+            if len(bboxes) == 0:
+                bboxes = bboxes
+            else:
+                bboxes[:, [0, 2]] = bboxes[:, [0, 2]] * resize_ratio
+                bboxes[:, [1, 3]] = bboxes[:, [1, 3]] * resize_ratio
             return images, bboxes
         return images
