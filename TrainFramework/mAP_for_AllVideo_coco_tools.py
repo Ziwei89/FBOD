@@ -45,9 +45,7 @@ def Convert_Annotation_coco_Label(annotation_file, image_id):
     return label_obj
 
 
-def movingobj_to_coco_label(label_obj_list, label_json_file):
-    width=1280
-    height=720
+def movingobj_to_coco_label(label_obj_list, label_json_file, width=1280, height=720):
     image_info = []
     categories = [{"supercategory": "bird", "id": 0, "name": "bird"}]
     annotations = []
@@ -90,8 +88,6 @@ def movingobj_to_coco_label(label_obj_list, label_json_file):
     json_fp.close()
 
 if __name__ == "__main__":
-    width=1280
-    height=720
 
     image_total_id = 0
     all_label_obj_list = []
@@ -159,6 +155,8 @@ if __name__ == "__main__":
                 image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
                 image_q.put(image)
                 image_shape = np.array(np.shape(image)[0:2]) # image size is 1280,720; image array's shape is 720,1280
+                img_width = image_shape[1]
+                img_heigth = image_shape[0]
                 # print("image_shape:")
                 # print(image_shape)
                 if frame_id >= continus_num:
@@ -195,7 +193,7 @@ if __name__ == "__main__":
                         obj_result_list.append(FBObj(score=score, image_id=start_image_total_id + (frame_id-int(continus_num/2)), bbox=box))
                     all_obj_result_list += obj_result_list
     label_json_file = "./instances_test2017.json"
-    movingobj_to_coco_label(all_label_obj_list, label_json_file)
+    movingobj_to_coco_label(all_label_obj_list, label_json_file, width=img_width, height=img_heigth)
     
     predict_data = []
     for obj_result in all_obj_result_list:
@@ -209,7 +207,7 @@ if __name__ == "__main__":
         ymax = float(box[3])
         w = xmax - xmin
         h = ymax - ymin
-        coco_box = [max(xmin, 0), max(ymin, 0), min(w, width), min(h, height)]
+        coco_box = [max(xmin, 0), max(ymin, 0), min(w, img_width), min(h, img_heigth)]
         obj_dic["bbox"] = coco_box
         obj_dic["score"] = float(obj_result.score)
         predict_data.append(obj_dic)
