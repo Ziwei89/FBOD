@@ -31,7 +31,7 @@ class opts(object):
         self.parser.add_argument('--Add_name', default='0816_1', type=str,
                             help='Add_name: add name to logs and pic')
         
-        self.parser.add_argument('--data_root_path', default="../dataset/FlyingBird/", type=str,
+        self.parser.add_argument('--data_root_path', default="../../dataset/FlyingBird/", type=str,
                             help='data_root_path: The path of the dataset.')
         ######### for train
         self.parser.add_argument('--Batch_size', default=8, type=int,

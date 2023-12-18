@@ -56,31 +56,43 @@ if __name__ == "__main__":
                               aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
                               abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
     Cuda = True
-    annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[input_img_num] + "_continuous_difficulty_val.txt"
-    dataset_image_path = opt.data_root_path + "val/images/"
+    annotation_path = "./dataloader/" + "img_label_" + num_to_english_c_dic[input_img_num] + "_continuous_difficulty_train.txt"
+    dataset_image_path = opt.data_root_path + "train/images/"
 
     
     with open(annotation_path) as f:
         lines = f.readlines()
     for line in lines:
 
-        images, bboxes, _ = load_data_resize(line, dataset_image_path, frame_num=input_img_num)
-        _, model_input= GetMiddleImg_ModelInput_for_MatImageList(images, model_input_size=model_input_size, continus_num=input_img_num, input_mode=input_mode)
+        images, bboxes, first_img_name = load_data_resize(line, dataset_image_path, frame_num=input_img_num, model_input_size=(model_input_size[1], model_input_size[0]))
+        middleimg, model_input= GetMiddleImg_ModelInput_for_MatImageList(images, model_input_size=model_input_size, continus_num=input_img_num, input_mode=input_mode)
+        for box in bboxes:
+            cv2.rectangle(middleimg,(int(box[0]),int(box[1])),(int(box[2]),int(box[3])),(0,255,0),2)#x1,y1,x2,y2
+            
         bs_bboxes = np.expand_dims(bboxes, axis=0)
         bs_bboxes = torch.from_numpy(bs_bboxes)
-        get_target = getTargets(model_input_size=model_input_size)
+        get_target = getTargets(model_input_size=(model_input_size[1], model_input_size[0])) ###w,h
 
         predictions = fb_detector.inference(model_input)
         dynamic_labels = get_target(predictions, bs_bboxes)
 
         label_cls = dynamic_labels[0][0]  ### h,w,c
-        label_conf = torch.sum(label_cls[:,:,1:], dim=3) # h, w ## Conf
+        label_conf = torch.sum(label_cls[:,:,1:], dim=2) # h, w ## Conf
 
         test_img = np.full((model_input_size[0],model_input_size[1],3), 255)
         test_img = test_img.astype(np.uint8)
         draw_heatmap(test_img, label_conf, image_size=model_input_size)
-        cv2.imwrite("./test_output/heatmapimg.png", test_img)
+
+        first_img_num_str = first_img_name.split(".")[0].split("_")[-1]
+        num_str = "%06d" % int(input_img_num/2)
+        img_name = first_img_name.split(first_img_num_str)[0] + num_str
+
+        cv2.imwrite("./test_output/test_gt.png", middleimg)
+        cv2.imwrite("./test_output/test_label_assign.png", test_img)
         str = input("Enter your input: ")
         if str == "q":
             is_quit = True
             break
+        elif str == "s":
+            cv2.imwrite("./test_output/" + img_name + "_gt.png", middleimg)
+            cv2.imwrite("./test_output/" + img_name + "_label_assign.png", test_img)
