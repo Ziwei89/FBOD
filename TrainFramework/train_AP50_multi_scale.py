@@ -218,14 +218,14 @@ if __name__ == "__main__":
         raise("Error! assign_method error.")
     
     save_model_dir = "logs/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                             + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_"  + opt.Add_name + "/"
+                             + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_multi_scale_"  + opt.Add_name + "/"
     os.makedirs(save_model_dir, exist_ok=True)
 
     ############### For log figure ################
     log_pic_name_loss = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "loss_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
+                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "loss_" + abbr_assign_method + "_multi_scale_" + opt.Add_name + ".jpg"
     log_pic_name_ap50 = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "ap50_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
+                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "ap50_" + abbr_assign_method + "_multi_scale_" + opt.Add_name + ".jpg"
     os.makedirs("train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
     ################################################
 
@@ -282,8 +282,10 @@ if __name__ == "__main__":
     # 建立loss函数
     # dynamic label assign, so the gettargets is ture.
     stride_list = [32, 8, 2]
-    ### large, medium, small
-    scale_min_max_list = [[80,256],[48,80],[13,48]] ### Need to count the object scale, and divide to 3 sets, log the min max of each set.
+    
+    scale_min_max_list = np.array([int(i) for i in (opt.scale_min_max_list).split(",")])
+    scale_min_max_list = scale_min_max_list.reshape(3,2)### large, medium, small
+
     loss_funcM = []
     for i in range(3):
         loss_funcM.append(LossFuncM(num_classes=num_classes, cuda=Cuda, scale_list=scale_min_max_list[i], stride=stride_list[i], gettargets=True))
@@ -337,11 +339,6 @@ if __name__ == "__main__":
 
     epoch_size = max(1, num_train//Batch_size)
     epoch_size_val = num_val//Batch_size
-    #------------------------------------#
-    #   解冻后训练
-    #------------------------------------#
-    for param in model.extract_features.backbone.parameters():
-        param.requires_grad = True
 
     largest_AP_50=0
     for epoch in range(start_Epoch,end_Epoch):

@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import copy
-from PIL import Image
+from PIL import Image, ImageDraw
 import dataloader.augmentations as DataAug
 
 def letterbox_image(image, size):
@@ -161,3 +161,39 @@ def correct_boxes(top, left, bottom, right, input_shape, image_shape):
     ],axis=-1)
     boxes *= np.concatenate([image_shape, image_shape],axis=-1)
     return boxes
+
+def draw_results(image_opencv, results, predicted_class="bird", bbox_color=(0,0,255), text_color=(255, 255, 255)):
+    write_img = Image.fromarray(cv2.cvtColor(image_opencv, cv2.COLOR_BGR2RGB))
+    for result in results:
+        left, top, right, bottom, score = result.cpu().numpy()
+        # top = top - 5
+        # left = left - 5
+        # bottom = bottom + 5
+        # right = right + 5
+
+        top = max(0, np.floor(top + 0.5).astype('int32'))
+        left = max(0, np.floor(left + 0.5).astype('int32'))
+        bottom = min(np.shape(write_img)[0], np.floor(bottom + 0.5).astype('int32'))
+        right = min(np.shape(write_img)[1], np.floor(right + 0.5).astype('int32'))
+        
+        label = '{} {:.2f}'.format(predicted_class, score)
+        draw = ImageDraw.Draw(write_img)
+        label_size = draw.textsize(label)
+        label = label.encode('utf-8')
+        print(str(label,'UTF-8'))
+        
+        if top - label_size[1] >= 0:
+            text_origin = np.array([left, top - label_size[1]])
+        else:
+            text_origin = np.array([left, top + 1])
+        for i in range(3):
+            draw.rectangle(
+                [left + i, top + i, right - i, bottom - i],
+                outline=bbox_color)
+        draw.rectangle(
+            [tuple(text_origin), tuple(text_origin + label_size)],
+            fill=bbox_color)
+        draw.text(tuple(text_origin), str(label,'UTF-8'), fill=text_color)
+        del draw
+    write_image_opencv = cv2.cvtColor(np.asarray(write_img),cv2.COLOR_RGB2BGR)
+    return write_image_opencv

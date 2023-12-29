@@ -33,6 +33,14 @@ class opts(object):
         
         self.parser.add_argument('--data_root_path', default="../../dataset/FlyingBird/", type=str,
                             help='data_root_path: The path of the dataset.')
+        
+        self.parser.add_argument('--scale_factor', default=80, type=int,
+                            help='scale_factor: Object scale normalization factor for single scale output model.')
+        
+        self.parser.add_argument('--scale_min_max_list', default="80,256,48,80,13,48", type=str,
+                            help='scale_min_max_list: Object scale normalization factor for multi scale output model, "s1,s2,s3,s4,s5,s6", "s1,s2" is the max min value of large scale. \
+                                  Need to count the object scale, and divide to 3 sets, log the min max of each set.')
+
         ######### for train
         self.parser.add_argument('--Batch_size', default=8, type=int,
                             help='Batch_size: The size of batch.')

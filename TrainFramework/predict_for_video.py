@@ -68,7 +68,7 @@ if __name__ == "__main__":
     fb_detector = FB_detector(model_input_size=model_input_size,
                               input_img_num=input_img_num, aggregation_output_channels=aggregation_output_channels,
                               aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
-                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
+                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name, scale=opt.scale_factor)
     
     cap=cv2.VideoCapture(video_path + video_name)
     ret,frame=cap.read()

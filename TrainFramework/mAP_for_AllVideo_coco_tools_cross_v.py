@@ -113,7 +113,7 @@ if __name__ == "__main__":
     else:
         raise("Error! abbr_assign_method error.")
     
-    Add_name=opt.Add_name
+    Add_name=opt.cross_vx + "_" + opt.Add_name
     model_name=opt.model_name
 
     # FB_detector parameters
@@ -128,16 +128,26 @@ if __name__ == "__main__":
                               abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name, scale=opt.scale_factor)
 
 
-    label_path = opt.data_root_path + "val/labels/" #.xlm label file path
+    label_path = opt.data_root_path + "all/labels/" #.xlm label file path
 
-    video_path = opt.data_root_path + "val/video/"
+    video_path = opt.data_root_path + "all/video/"
 
     continus_num = input_img_num
     
     image_total_id = 0
     all_label_obj_list = []
     all_obj_result_list = []
-    video_names = os.listdir(video_path)
+
+    video_name_file = "./dataloader/" + opt.cross_vx + "/test_video_name.txt"
+
+    video_names = []
+    with open(video_name_file) as f:
+        video_name_lines = f.readlines()
+        for line in video_name_lines:
+            video_name = line.strip()
+            video_names.append(video_name)
+    print(video_names)
+
     label_name_list=os.listdir(label_path)
 
     for video_name in video_names:

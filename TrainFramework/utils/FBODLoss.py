@@ -187,7 +187,8 @@ class LossFunc(nn.Module): #
                 k = int(k.numpy())
                 topk = 2*k
                 if topk > bs_neg_nums[b]:
-                    topk = bs_neg_nums[b]
+                    topk = bs_neg_nums[b].cpu()
+                    topk = int(topk.numpy())
                 neg_MSE_Loss_topk_sum = torch.sum(torch.topk((neg_MSE_Loss[b]).view(-1), topk).values)
                 pos_MSE_Loss_sum = torch.sum(pos_MSE_Loss[b])
                 CONF_loss_per_batch = (neg_MSE_Loss_topk_sum + 10*pos_MSE_Loss_sum)/bs_obj_nums[b]
@@ -394,7 +395,8 @@ class LossFuncM(nn.Module): #
                 k = int(k.numpy())
                 topk = 2*k
                 if topk > bs_neg_nums[b]:
-                    topk = bs_neg_nums[b]
+                    topk = bs_neg_nums[b].cpu()
+                    topk = int(topk.numpy())
                 neg_MSE_Loss_topk_sum = torch.sum(torch.topk((neg_MSE_Loss[b]).view(-1), topk).values)
                 pos_MSE_Loss_sum = torch.sum(pos_MSE_Loss[b])
                 CONF_loss_per_batch = (neg_MSE_Loss_topk_sum + 10*pos_MSE_Loss_sum)/bs_obj_nums[b]

@@ -1,7 +1,7 @@
 # FBOD
 Flying Bird Object Detection in Surveillance Video Method Based on the Characteristics of Bird in Surveillance Video  
 基于监控视频飞鸟特点的监控视频飞鸟目标检测方法  
-该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimerOTA动态标签分配策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
+该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimOTA-OC动态标签分配策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
 <div align="center">
   <img src="https://github.com/Ziwei89/FBOD/blob/master/Illustrative_Figure/framework_github.jpeg">
 </div>
@@ -91,13 +91,15 @@ aggregation_method                 #连续n帧图像特征聚合方式
 aggregation_output_channels        #连续n帧视频图像经过特征聚合后输出的通道数(可以根据输入连续帧数适当进行调整)
 fusion_method                      #浅层特征层和深层特征层融合方式
 assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimOTA-OC(auto_assign, aa)
+scale_factor                       #单尺度输出模型，目标尺度归一化因子，用于将目标的坐标数据归一化到一个较小的范围
+scale_min_max_list                 #多尺度(3个尺度)输出模型，目标尺度最大最小数列。统计目标尺度范围，将其划分为大尺度、中等尺度、小尺度目标，分别记录其最大最小尺寸。用于将目标的坐标数据归一化到一个较小的范围
 pretrain_model_path                #预训练模型的路径。在使用auto_assign标签分配方式时，先采用静态的标签分配方式进行预训练，会取得更好的效果
 Add_name                           #在相关记录文件(如模型保存文件夹或训练记录图片)，增加后缀
 data_augmentation                  #是否在训练时使用数据增强
 start_Epoch                        #起始训练Epoch，一般用在加载训练过的模型继续训练时设置，它可以调整学习率以便接着训练
 ```
-**<font color=red>注意：</font>这里训练脚本有4个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimOTA-OC(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。**
-含有“multi_scale”的训练脚本表示，训练的模型输出是多尺度的(3个尺度)。
+**<font color=red>注意：</font>这里训练脚本有5个，其中有“label_assign_in_dataloader”后缀的表示静态标签分配方式(在dataloader中进行分配)，使用收缩边界框(binary_assign)、中心高斯(guassian_assign)标签分配方式时，应选择含有该后缀的训练脚本，选择SimOTA-OC(auto_assign)分配方式时，应选择不含有该后缀的训练脚本。**
+含有“multi_scale”的训练脚本表示训练的模型输出是多尺度的(3个尺度)。有“_with_absolute_path”后缀的训练脚本表示训练时，标签描述脚本中，图像指定绝对路径。
 训练的一个例子:  
 ```
 cd TrainFramework
@@ -108,6 +110,7 @@ python train_AP50.py \
         --aggregation_method=relatedatten \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
+        --scale_factor=80 \
         --assign_method=auto_assign \
         --pretrain_model_path=logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_ga_20230822/FB_object_detect_model.pth \
         --Batch_size=8 \
@@ -132,6 +135,7 @@ python predict_for_image.py \
         --aggregation_method=relatedatten \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
+        --scale_factor=80 \
         --assign_method=auto_assign \
         --data_root_path=../dataset/FlyingBird/ \
         --Add_name=20230822 \
@@ -150,6 +154,7 @@ python predict_for_video.py \
         --aggregation_method=relatedatten \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
+        --scale_factor=80 \
         --assign_method=auto_assign \
         --data_root_path=../dataset/FlyingBird/ \
         --Add_name=20230822 \
@@ -169,6 +174,7 @@ python predict_for_video_with_video_full_path.py \
         --aggregation_method=relatedatten \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
+        --scale_factor=80 \
         --assign_method=auto_assign \
         --Add_name=20230822 \
         --model_name=FB_object_detect_model.pth \
@@ -187,6 +193,7 @@ python mAP_for_AllVideo.py \
         --aggregation_method=relatedatten \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
+        --scale_factor=80 \
         --assign_method=auto_assign \
         --data_root_path=../dataset/FlyingBird/ \
         --Add_name=20230822 \
@@ -203,6 +210,7 @@ python mAP_for_video.py \
         --aggregation_method=relatedatten \
         --backbone_name=cspdarknet53 \
         --fusion_method=concat \
+        --scale_factor=80 \
         --assign_method=auto_assign \
         --data_root_path=../dataset/FlyingBird/ \
         --Add_name=20230822 \

@@ -34,6 +34,8 @@ if __name__ == '__main__':
                         help='data_root_path: The path of the dataset.')
     parser.add_argument('--input_img_num', default=5, type=int,
                         help='input_img_num: The continous video frames, input to the model')
+    parser.add_argument('--img_ext', default=".jpg", type=str,
+                        help='img_ext: The extension name of the image')
     args = parser.parse_args()
 
     train_img_label_txt_file = "../TrainFrameword/dataloader/img_label_" + num_to_chinese_c_dic[args.input_img_num] + "_continuous_difficulty_train_raw.txt"
@@ -57,19 +59,22 @@ if __name__ == '__main__':
             if label_file.split(".")[1]!="xml":
                 continue
             num = int((label_file.split(".")[0]).split("_")[-1])
+            num_str = "%06d" % int(num)
+            prefix_name = label_file.split(num_str)[0]
+
             num = num-int(args.input_img_num/2)
             if num < 0:
                 continue
             Is_all_continuous_img_exit = True
             for i in range(num, num+args.input_img_num):
                 i_str = "%06d" % int(i)
-                image_name = (label_file.split(".")[0]).split("_")[0]+"_" + (label_file.split(".")[0]).split("_")[1]+"_" +i_str+ '.jpg'
+                image_name = prefix_name + i_str + args.img_ext
                 if not os.path.exists(image_path + image_name):
                     Is_all_continuous_img_exit = False
                     break
             if Is_all_continuous_img_exit: 
                 num_str = "%06d" % int(num)
-                image_name = (label_file.split(".")[0]).split("_")[0]+"_" + (label_file.split(".")[0]).split("_")[1]+"_" +num_str+ '.jpg'
+                image_name = prefix_name + num_str + args.img_ext
                 print(image_name)
                 list_file.write(image_name)
                 lable_str = convert_annotation(label_path + label_file, list_file)

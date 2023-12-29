@@ -2,7 +2,7 @@ import pycocotools.coco as coco
 from pycocotools.cocoeval import COCOeval
 import json
 
-from FB_detector import FB_detector
+from FB_detector_multi_scale import FB_detector
 import os
 import cv2
 import numpy as np
@@ -120,12 +120,15 @@ if __name__ == "__main__":
     # model_input_size=(384,672),
     # input_img_num=5, aggregation_output_channels=16, aggregation_method="multiinput", input_mode="GRG", backbone_name="cspdarknet53",
     # Add_name="as_1021_1", model_name="FB_object_detect_model.pth",
-    # scale=80.
+    # scale_max_list=[None,None,None].
 
+    scale_min_max_list = np.array([int(i) for i in (opt.scale_min_max_list).split(",")])
+    scale_min_max_list = scale_min_max_list.reshape(3,2)### large, medium, small
+    scale_max_list = [scale_min_max_list[0][1], scale_min_max_list[1][1], scale_min_max_list[2][1]]
     fb_detector = FB_detector(model_input_size=model_input_size,
                               input_img_num=input_img_num, aggregation_output_channels=aggregation_output_channels,
                               aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
-                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name, scale=opt.scale_factor)
+                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name, scale_max_list=scale_max_list)
 
 
     label_path = opt.data_root_path + "val/labels/" #.xlm label file path

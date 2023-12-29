@@ -215,16 +215,16 @@ if __name__ == "__main__":
     else:
         raise("Error! assign_method error.")
     
-    save_model_dir = "logs/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                             + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_"  + opt.Add_name + "/"
+    save_model_dir = "logs/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
+                             + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_"  + opt.cross_vx + "_" + opt.Add_name + "/"
     os.makedirs(save_model_dir, exist_ok=True)
 
     ############### For log figure ################
-    log_pic_name_loss = "train_output_img/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "loss_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
-    log_pic_name_ap50 = "train_output_img/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "ap50_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
-    os.makedirs("train_output_img/" + opt.cross_vx + "/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
+    log_pic_name_loss = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
+                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "loss_" + abbr_assign_method + "_" + opt.cross_vx + "_" + opt.Add_name + ".jpg"
+    log_pic_name_ap50 = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
+                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "ap50_" + abbr_assign_method + "_" + opt.cross_vx + "_" + opt.Add_name + ".jpg"
+    os.makedirs("train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
     ################################################
 
     #-------------------------------#
@@ -277,10 +277,11 @@ if __name__ == "__main__":
 
     # 建立loss函数
     # dynamic label assign, so the gettargets is ture.
-    loss_func = LossFunc(num_classes=num_classes, cuda=Cuda, gettargets=True)
+    loss_func = LossFunc(num_classes=num_classes, model_input_size=(model_input_size[1], model_input_size[0]),
+                         scale=opt.scale_factor, cuda=Cuda, gettargets=True)
 
     # For calculating the AP50
-    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size)
+    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size, scale=opt.scale_factor)
     labels_to_results = LablesToResults(batch_size=opt.Batch_size)
 
     # # 0.2用于验证，0.8用于训练
@@ -325,11 +326,6 @@ if __name__ == "__main__":
 
     epoch_size = max(1, num_train//Batch_size)
     epoch_size_val = num_val//Batch_size
-    #------------------------------------#
-    #   解冻后训练
-    #------------------------------------#
-    for param in model.extract_features.backbone.parameters():
-        param.requires_grad = True
 
     largest_AP_50=0
     for epoch in range(start_Epoch,end_Epoch):

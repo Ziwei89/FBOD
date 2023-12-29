@@ -279,10 +279,11 @@ if __name__ == "__main__":
 
     # 建立loss函数
     # dynamic label assign, so the gettargets is ture.
-    loss_func = LossFunc(num_classes=num_classes, cuda=Cuda, gettargets=True)
+    loss_func = LossFunc(num_classes=num_classes, model_input_size=(model_input_size[1], model_input_size[0]),
+                         scale=opt.scale_factor, cuda=Cuda, gettargets=True)
 
     # For calculating the AP50
-    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size)
+    detect_post_process = FB_Postprocess(batch_size=opt.Batch_size, model_input_size=model_input_size, scale=opt.scale_factor)
     labels_to_results = LablesToResults(batch_size=opt.Batch_size)
 
     # # 0.2用于验证，0.8用于训练
@@ -327,11 +328,6 @@ if __name__ == "__main__":
 
     epoch_size = max(1, num_train//Batch_size)
     epoch_size_val = num_val//Batch_size
-    #------------------------------------#
-    #   解冻后训练
-    #------------------------------------#
-    for param in model.extract_features.backbone.parameters():
-        param.requires_grad = True
 
     largest_AP_50=0
     for epoch in range(start_Epoch,end_Epoch):

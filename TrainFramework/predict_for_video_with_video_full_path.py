@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 from FB_detector import FB_detector
-from utils.common import GetMiddleImg_ModelInput
+from utils.common import GetMiddleImg_ModelInput, draw_results
 from config.opts import opts
 from queue import Queue
 from PIL import Image
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     fb_detector = FB_detector(model_input_size=model_input_size,
                               input_img_num=input_img_num, aggregation_output_channels=aggregation_output_channels,
                               aggregation_method=aggregation_method, input_mode=input_mode, backbone_name=backbone_name, fusion_method=fusion_method,
-                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name)
+                              abbr_assign_method=abbr_assign_method, Add_name=Add_name, model_name=model_name, scale=opt.scale_factor)
     
     print("read video: ",opt.video_full_path)
     cap=cv2.VideoCapture(opt.video_full_path)
@@ -95,9 +95,6 @@ if __name__ == "__main__":
                 image_opencv = cv2.cvtColor(np.asarray(write_img),cv2.COLOR_RGB2BGR) 
                 _ = image_q.get()
                 outputs = fb_detector.detect_image(model_input, raw_image_shape=raw_image_shape)
-
-                detect_bboxes = outputs[0][:,:4]
-                for box in detect_bboxes:
-                    cv2.rectangle(image_opencv,(int(box[0]),int(box[1])),(int(box[2]),int(box[3])),(0,0,255),2)#x1,y1,x2,y2
+                image_opencv = draw_results(image_opencv, outputs[0])
                 videowriter.write(image_opencv)
     videowriter.release()

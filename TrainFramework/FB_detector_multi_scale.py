@@ -43,7 +43,7 @@ class FB_detector(object):
 
         # load model
         model_path = "logs/" + num_to_english_c_dic[input_img_num] + "/" + str(model_input_size[0]) + "_" + str(model_input_size[1]) + "/" \
-                           + input_mode + "_" + aggregation_method + "_" + backbone_name + "_" + fusion_method + "_" + abbr_assign_method + "_" + Add_name + "/" + model_name
+                           + input_mode + "_" + aggregation_method + "_" + backbone_name + "_" + fusion_method + "_" + abbr_assign_method + "_multi_scale_" + Add_name + "/" + model_name
         
         print('Loading weights into state dict...')
         device = torch.device('cuda' if self.cuda else 'cpu')
