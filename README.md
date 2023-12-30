@@ -6,8 +6,8 @@ Flying Bird Object Detection method in Surveillance Video
   <img src="https://github.com/Ziwei89/FBOD/blob/master/Illustrative_Figure/framework_github.jpeg">
 </div>
 
-**<font color=red>注意：</font>本文并没有对通用的目标检测方法进行优化，所以本文所提方法应用于通用的目标检测任务，不会有优势。因为我们主要针对的是单帧图像特征不明显、尺寸较小的目标。**
 
+**<font color=red>注意：</font>论文并没有对通用的目标检测方法进行优化，所以本文所提方法应用于通用的目标检测任务，不会有优势。因为我们主要针对的是单帧图像特征不明显、尺寸较小的目标。**
 **<font color=red>注意：</font>论文中使用的数据集(监控视频飞鸟目标数据)，部分不能公开。后续我们会将可公开部分进行公开(由于可公开部分的数据量较小，我们正在采集可以公开的数据进行补充)。敬请期待！**
 
 本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)  
