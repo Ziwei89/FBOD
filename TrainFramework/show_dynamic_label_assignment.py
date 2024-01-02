@@ -6,6 +6,7 @@ from utils.common import load_data_resize, GetMiddleImg_ModelInput_for_MatImageL
 from config.opts import opts
 import numpy as np
 from utils.getDynamicTargets import getTargets
+import copy
 
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
@@ -66,12 +67,13 @@ if __name__ == "__main__":
 
         images, bboxes, first_img_name = load_data_resize(line, dataset_image_path, frame_num=input_img_num, model_input_size=(model_input_size[1], model_input_size[0]))
         middleimg, model_input= GetMiddleImg_ModelInput_for_MatImageList(images, model_input_size=model_input_size, continus_num=input_img_num, input_mode=input_mode)
-        for box in bboxes:
+        draw_bboxes = copy.deepcopy(bboxes)
+        for box in draw_bboxes:
             cv2.rectangle(middleimg,(int(box[0]),int(box[1])),(int(box[2]),int(box[3])),(0,255,0),2)#x1,y1,x2,y2
             
         bs_bboxes = np.expand_dims(bboxes, axis=0)
         bs_bboxes = torch.from_numpy(bs_bboxes)
-        get_target = getTargets(model_input_size=(model_input_size[1], model_input_size[0])) ###w,h
+        get_target = getTargets(model_input_size=(model_input_size[1], model_input_size[0]), scale=opt.scale_factor) ###w,h
 
         predictions = fb_detector.inference(model_input)
         dynamic_labels = get_target(predictions, bs_bboxes)
@@ -82,6 +84,8 @@ if __name__ == "__main__":
         test_img = np.full((model_input_size[0],model_input_size[1],3), 255)
         test_img = test_img.astype(np.uint8)
         draw_heatmap(test_img, label_conf, image_size=model_input_size)
+        for box in draw_bboxes:
+            cv2.rectangle(test_img,(int(box[0]),int(box[1])),(int(box[2]),int(box[3])),(0,255,0),2)#x1,y1,x2,y2
 
         first_img_num_str = first_img_name.split(".")[0].split("_")[-1]
         num_str = "%06d" % int(input_img_num/2)

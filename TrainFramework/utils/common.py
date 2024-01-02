@@ -27,12 +27,20 @@ def load_data(line, image_path, frame_num):
     """line of train_lines was saved as 'image name, label'"""
     line =  line.split()
     first_img_name = line[0]
+    img_ext = first_img_name.split(".")[1]
     first_img_num_str = first_img_name.split(".")[0].split("_")[-1]
     first_img_num = int(first_img_num_str)
     images = []
+    prefix_img_name = ""
+    split_count = len(first_img_name.split(first_img_num_str))
+    for i in range(split_count-2):
+        prefix_img_name += first_img_name.split(first_img_num_str)[i] + first_img_num_str
+        
     for num in range(first_img_num, first_img_num + frame_num):
         num_str = "%06d" % int(num)
-        img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
+
+        img_name = prefix_img_name + first_img_name.split(first_img_num_str)[split_count-2] + num_str + "." + img_ext
+
         image_full_name = os.path.join(image_path,img_name)
         image = cv2.imread(image_full_name)
         images.append(image)
@@ -46,12 +54,20 @@ def load_data_resize(line, image_path, frame_num, model_input_size):
     """line of train_lines was saved as 'image name, label'"""
     line =  line.split()
     first_img_name = line[0]
+    img_ext = first_img_name.split(".")[1]
     first_img_num_str = first_img_name.split(".")[0].split("_")[-1]
     first_img_num = int(first_img_num_str)
     images = []
+    prefix_img_name = ""
+    split_count = len(first_img_name.split(first_img_num_str))
+    for i in range(split_count-2):
+        prefix_img_name += first_img_name.split(first_img_num_str)[i] + first_img_num_str
+        
     for num in range(first_img_num, first_img_num + frame_num):
         num_str = "%06d" % int(num)
-        img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
+        
+        img_name = prefix_img_name + first_img_name.split(first_img_num_str)[split_count-2] + num_str + "." + img_ext
+
         image_full_name = os.path.join(image_path,img_name)
         image = cv2.imread(image_full_name)
         images.append(image)
