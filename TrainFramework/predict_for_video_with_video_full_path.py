@@ -8,6 +8,7 @@ from queue import Queue
 from PIL import Image
 import copy
 import xml.etree.ElementTree as ET
+import time
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -94,7 +95,10 @@ if __name__ == "__main__":
                 write_img = copy.copy(middle_img_)
                 image_opencv = cv2.cvtColor(np.asarray(write_img),cv2.COLOR_RGB2BGR) 
                 _ = image_q.get()
+                t1=time.time()
                 outputs = fb_detector.detect_image(model_input, raw_image_shape=raw_image_shape)
+                t2 = time.time()
+                print("fps:", 1/(t2-t1))
                 image_opencv = draw_results(image_opencv, outputs[0])
                 videowriter.write(image_opencv)
     videowriter.release()

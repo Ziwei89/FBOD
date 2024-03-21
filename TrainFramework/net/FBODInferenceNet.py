@@ -4,6 +4,7 @@ import sys
 sys.path.append("..")
 from .feature_aggregation.feature_aggregation import ImagesAggregation
 from .feature_extraction.feature_extraction import FeatureExtraction, FeatureExtraction_MultiOutput
+from utils.feature_map_visualization import show_feature_map_heatmap
 
 def conv2d(filter_in, filter_out, kernel_size, stride=1):
     pad = (kernel_size - 1) // 2 if kernel_size else 0
@@ -54,6 +55,7 @@ class FBODInferenceBody(nn.Module):
 
         conf = self.FBODetection_head_conf(out1) # output channels = 1
         pos = self.FBODetection_head_pos(out1) # output channels = 4
+        # show_feature_map_heatmap(conf)
 
         return conf, pos
 
