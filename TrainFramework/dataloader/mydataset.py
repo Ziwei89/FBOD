@@ -102,6 +102,7 @@ class CustomDataset(Dataset):
             images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
+            images, bboxes = DataAug.RandomSimulationPaddingImages()(np.copy(images), np.copy(bboxes))
         images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
         # print(bboxes)
         return images, bboxes
