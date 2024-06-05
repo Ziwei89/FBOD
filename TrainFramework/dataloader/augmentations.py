@@ -145,8 +145,9 @@ class RandomCrop(object):
             images = imgs
         return images, bboxes
 
-class RandomSimulationPaddingImages(object):
+class RandomSimulationPaddingImages_front(object):
     ## Randomly simulate image sequence padding.
+    ## e.g. 1,2,3,4,5 -> black img,black img,3,4,5
     def __init__(self, p=0.05):
         self.p = p
 
@@ -162,6 +163,30 @@ class RandomSimulationPaddingImages(object):
                 images=[]
                 for i, img in enumerate(imgs):
                     if i < num_of_replacement:
+                        img = black_image
+                    images.append(img)
+        else:
+            images = imgs
+        return images, bboxes
+
+class RandomSimulationPaddingImages_end(object):
+    ## Randomly simulate image sequence padding.
+    ## e.g. 1,2,3,4,5 -> 1,2,3,black img,black img
+    def __init__(self, p=0.05):
+        self.p = p
+
+    def __call__(self, imgs, bboxes):
+        if random.random() < self.p:
+            n = int((len(imgs)-1)/2)
+            if n == 0:
+                images = imgs
+            else:
+                h_img, w_img, channel = imgs[0].shape
+                black_image = np.zeros((h_img, w_img, channel), dtype=np.uint8)
+                num_of_replacement = random.randint(1, n)
+                images=[]
+                for i, img in enumerate(imgs):
+                    if i >= len(imgs) - num_of_replacement:
                         img = black_image
                     images.append(img)
         else:

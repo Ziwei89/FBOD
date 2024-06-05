@@ -123,7 +123,7 @@ python train_AP50.py \
         --Add_name=20230822
 cd ../ #回到项目根目录
 ```
-训练时，程序将在TrainFramework/目录下创建一个logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/的目录，该目录会保存一些训练模型。同时，会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_loss_aa_20230822.jpg的图像用于记录训练过程的loss，训练到30个epoch后，还会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_loss_ap50_20230822.jpg的图像用于记录后续模型的AP50性能指标。  
+训练时，程序将在TrainFramework/目录下创建一个logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/的目录，该目录会保存一些训练模型。同时，会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_loss.jpg的图像用于记录训练过程的loss，训练到30个epoch后，还会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_ap50.jpg的图像用于记录后续模型的AP50性能指标。  
 
 ## 4、测试和评价飞鸟目标检测模型
 在运行测试和评价脚本时，要保持命令行参数与训练时一致(不用包括训练特有的如Batch_size等参数，需要特别增加模型名字的参数(因为保存模型的文件夹下有多个模型))，否则脚本将报无法找到模型的错误。

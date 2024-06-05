@@ -221,9 +221,9 @@ if __name__ == "__main__":
 
     ############### For log figure ################
     log_pic_name_loss = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "loss_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
+                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_" + opt.Add_name + "_loss" + ".jpg"
     log_pic_name_ap50 = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + "ap50_" + abbr_assign_method + "_" + opt.Add_name + ".jpg"
+                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_" + opt.Add_name + "_ap50" + ".jpg"
     os.makedirs("train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
     ################################################
 
