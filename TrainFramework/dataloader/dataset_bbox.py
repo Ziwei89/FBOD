@@ -30,11 +30,13 @@ class CustomDataset(Dataset):
         first_img_num = int(first_img_num_str)
         images = []
         prefix_img_name = ""
-        split_count = len(first_img_name.split(first_img_num_str))
+        split_count = len(first_img_name.split(first_img_num_str)) ### To solve the problem like "ILSVRC2015_train_000128_000128.JPEG", we want the prefix_img_name is "ILSVRC2015_train_000128_"
         for i in range(split_count-2):
             prefix_img_name += first_img_name.split(first_img_num_str)[i] + first_img_num_str
         
         for num in range(first_img_num, first_img_num + self.frame_num):
+            if num < 0:
+                continue
             num_str = "%06d" % int(num)
 
             img_name = prefix_img_name + first_img_name.split(first_img_num_str)[split_count-2] + num_str + "." + img_ext
@@ -42,6 +44,12 @@ class CustomDataset(Dataset):
             image_full_name = os.path.join(self.image_path,img_name)
             image = cv2.imread(image_full_name)
             images.append(image)
+        if first_img_num < 0: #### black image padding
+            black_img_num = abs(first_img_num)
+            h_img, w_img, c = images[0].shape
+            for _ in range(black_img_num):
+                black_image = np.zeros((h_img, w_img, c), np.uint8)
+                images.insert(0, black_image)
         if  line[1:][0] == "None":
             bboxes = np.array([])
         else:
@@ -53,8 +61,8 @@ class CustomDataset(Dataset):
             images, bboxes = DataAug.Noise()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.HSV()(np.copy(images), np.copy(bboxes))
             images, bboxes = DataAug.RandomCrop()(np.copy(images), np.copy(bboxes))
-            images, bboxes = DataAug.RandomSimulationPaddingImages_front()(np.copy(images), np.copy(bboxes))
-            images, bboxes = DataAug.RandomSimulationPaddingImages_end()(np.copy(images), np.copy(bboxes))
+            # images, bboxes = DataAug.RandomSimulationPaddingImages_front()(np.copy(images), np.copy(bboxes))
+            # images, bboxes = DataAug.RandomSimulationPaddingImages_end()(np.copy(images), np.copy(bboxes))
         images, bboxes = DataAug.Resize((self.image_size[1], self.image_size[0]), True)(np.copy(images), np.copy(bboxes))
         return images, bboxes
 

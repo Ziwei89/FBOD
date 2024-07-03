@@ -152,6 +152,7 @@ if __name__ == "__main__":
         ################# frames padding ################
         for i in range(int(continus_num/2)):
             black_image = np.zeros((height, width, 3), dtype=np.uint8)
+            black_image = Image.fromarray(cv2.cvtColor(black_image,cv2.COLOR_BGR2RGB))
             image_q.put(black_image)
         #################################################
 
@@ -207,6 +208,7 @@ if __name__ == "__main__":
                     for n in range(1, int(continus_num/2)+1):
                         
                         black_image = np.zeros((height, width, 3), dtype=np.uint8)
+                        black_image = Image.fromarray(cv2.cvtColor(black_image,cv2.COLOR_BGR2RGB))
                         image_q.put(black_image)
 
                         exist_label = False
