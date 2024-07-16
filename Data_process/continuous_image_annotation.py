@@ -38,8 +38,8 @@ if __name__ == '__main__':
                         help='img_ext: The extension name of the image')
     args = parser.parse_args()
 
-    train_img_label_txt_file = "../TrainFrameword/dataloader/img_label_" + num_to_chinese_c_dic[args.input_img_num] + "_continuous_difficulty_train_raw.txt"
-    val_img_label_txt_file = "../TrainFrameword/dataloader/img_label_" + num_to_chinese_c_dic[args.input_img_num] + "_continuous_difficulty_val_raw.txt"
+    train_img_label_txt_file = "../TrainFramework/dataloader/img_label_" + num_to_chinese_c_dic[args.input_img_num] + "_continuous_difficulty_train_raw.txt"
+    val_img_label_txt_file = "../TrainFramework/dataloader/img_label_" + num_to_chinese_c_dic[args.input_img_num] + "_continuous_difficulty_val_raw.txt"
 
     list_file_train = open(train_img_label_txt_file, 'w')
     list_file_val = open(val_img_label_txt_file, 'w')
