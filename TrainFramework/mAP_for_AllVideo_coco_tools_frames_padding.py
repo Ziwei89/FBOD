@@ -169,22 +169,12 @@ if __name__ == "__main__":
                 image_shape = np.array(np.shape(image)[0:2]) # image size is 1280,720; image array's shape is 720,1280
                 img_width = int(image_shape[1])
                 img_heigth = int(image_shape[0])
-                # print("image_shape:")
-                # print(image_shape)
-                if frame_id >= int(continus_num/2) + 1 and frame_id <= frame_count:
-                    exist_label = False
+                
+                frame_id_str = "%06d" % int((frame_id-1))
+                label_name = video_name.split(".")[0] + "_" + frame_id_str + ".xml"
+                all_label_obj_list.append(Convert_Annotation_coco_Label(label_path + label_name, start_image_total_id + frame_id))
 
-                    ### The output of model is start from 1st frame now
-                    frame_id_str = "%06d" % int((frame_id-1)-int(continus_num/2)) #The frame id in dataset start from 0, but this script start from 1.
-                    label_name = video_name.split(".")[0] + "_" + frame_id_str + ".xml"
-                    if label_name in label_name_list:
-                        exist_label = True
-                        all_label_obj_list.append(Convert_Annotation_coco_Label(label_path + label_name, start_image_total_id + (frame_id-int(continus_num/2))))
-                    
-                    # If there's no label for the middle frame of this input quene, continue this detection.
-                    if exist_label == False:
-                        _ = image_q.get()
-                        continue
+                if frame_id >= int(continus_num/2) + 1 and frame_id <= frame_count:
 
                     _, model_input = GetMiddleImg_ModelInput(image_q, model_input_size=model_input_size, continus_num=continus_num, input_mode=input_mode)
                     _ = image_q.get()
@@ -211,17 +201,6 @@ if __name__ == "__main__":
                         black_image = Image.fromarray(cv2.cvtColor(black_image,cv2.COLOR_BGR2RGB))
                         image_q.put(black_image)
 
-                        exist_label = False
-                        frame_id_str = "%06d" % int((frame_id-1) - (int(continus_num/2)-n)) #The frame id in dataset start from 0, but this script start from 1.
-                        label_name = video_name.split(".")[0] + "_" + frame_id_str + ".xml"
-                        if label_name in label_name_list:
-                            exist_label = True
-                            all_label_obj_list.append(Convert_Annotation_coco_Label(label_path + label_name, start_image_total_id + (frame_id-(int(continus_num/2)-n))))
-                        
-                        # If there's no label for the middle frame of this input quene, continue this detection.
-                        if exist_label == False:
-                            _ = image_q.get()
-                            continue
                         _, model_input = GetMiddleImg_ModelInput(image_q, model_input_size=model_input_size, continus_num=continus_num, input_mode=input_mode)
                         _ = image_q.get()
                         outputs = fb_detector.detect_image(model_input, raw_image_shape=image_shape)
