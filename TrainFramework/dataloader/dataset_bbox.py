@@ -38,12 +38,15 @@ class CustomDataset(Dataset):
             if num < 0:
                 continue
             num_str = "%06d" % int(num)
-
             img_name = prefix_img_name + first_img_name.split(first_img_num_str)[split_count-2] + num_str + "." + img_ext
-
             image_full_name = os.path.join(self.image_path,img_name)
-            image = cv2.imread(image_full_name)
-            images.append(image)
+            if not os.path.exists(image_full_name): ### padding black image
+                h_img, w_img, c = images[0].shape
+                black_image = np.zeros((h_img, w_img, c), np.uint8)
+                images.append(black_image)
+            else:
+                image = cv2.imread(image_full_name)
+                images.append(image)
         if first_img_num < 0: #### black image padding
             black_img_num = abs(first_img_num)
             h_img, w_img, c = images[0].shape
@@ -254,7 +257,7 @@ if __name__ == '__main__':
     image_size = (672,384)
     input_mode = "RGR"
     continues_num=5
-    dataset_image_path = "../../dataset/val/images/"
+    dataset_image_path = "../../dataset/FBD-SV-2024/images/val/"
     data = open("./img_label_five_continuous_difficulty_val.txt").readlines()
     #################LOC
 

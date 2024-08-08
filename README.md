@@ -1,5 +1,5 @@
 # FBOD-SV
-[Flying Bird Object Detection method in Surveillance Video ](https://arxiv.org/abs/2401.03749)
+[A Flying Bird Object Detection method for Surveillance Video ](https://ieeexplore.ieee.org/document/10614237)
 基于监控视频飞鸟特点的监控视频飞鸟目标检测方法  
 该论文对监控视频中飞鸟目标存在单帧图像特征不明显、大多数情况下尺寸较小以及非对称规则等特征，提出了一种监控视频飞鸟目标检测方法。首先，设计了一种新的特征聚合模块，相关注意力特征聚合模块(Co-Attention-FA)，依据飞鸟目标在连续多帧图像上的相关关系，对飞鸟目标的特征进行聚合。其次，设计了一种先下采样，再上采样的飞鸟目标检测网络(FBOD-Net)，利用一个融合了细腻的空间信息与大感受野信息的大特征层来检测特殊的多尺度(大多数情况为小尺度)飞鸟目标。最后，简化了SimOTA动态标签分配方法，提出了SimOTA-OC动态标签分配策略，解决了因飞鸟目标不规则而导致的标签分配困难问题。论文概况图如下所示。  
 <div align="center">
@@ -9,7 +9,7 @@
 
 **<font color=red>注意：</font>该项目主要针对的是单帧图像特征不明显、绝大多数情况尺寸较小的目标(偶有大目标)。采用这种类型的数据集训练FBOD-Net，具备检测大目标的能力。如采用大多数情况为大目标的数据集训练FBOD-Net，训练过程可能难以收敛。**
 
-**<font color=red>注意：</font>论文中使用的数据集(监控视频飞鸟目标数据)，部分不能公开。后续我们会将可公开部分进行公开(由于可公开部分的数据量较小，我们正在采集可以公开的数据进行补充)。敬请期待！**
+**<font color=red>注意：</font>论文中使用的数据集(监控视频飞鸟目标数据)，部分不能公开。我们已经采集可以公开的数据FBD-SV-2024，将于近期公布。敬请期待！**
 
 本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)  
 <font color=red>注意：</font>项目中少量代码来源于其他工程或互联网，在此鸣谢。若需要特别指明或存在权力要求，请联系sun_zi_wei@my.swjtu.edu.cn。本项目可以用于学习和科研，不可用于商业行为。
@@ -28,27 +28,28 @@ git clone https://github.com/Ziwei89/FBOD.git
 ### (1) 数据组织
 ```  
 data_root_path/  
-               train/
-                     video/
+               videos/
+                     train/
                            bird_1.mp4
                            bird_2.mp4
                            ...  
-                     images/  
+                     val/
+                images/
+                     train/  
                            bird_1_000000.jpg  
                            bird_1_000001.jpg  
                            ...  
                            bird_2_000000.jpg  
                            ...  
-                     labels/  
+                     val/
+                labels
+                     train/  
                            bird_1_000000.xml  
                            bird_1_000001.xml  
                            ...
                            bird_2_000000.xml
                            ...  
-               val/  
-                     video/
-                     images/  
-                     labels/  
+                     val/
 ```  
 ### (2) 生成数据描述txt文件用于训练和测试(训练一个txt,测试一个txt)
 数据描述txt文件的格式如下：  
@@ -63,7 +64,7 @@ bird_3_000144.jpg 481,372,489,389,0,0.375 993,390,1013,456,0,0.625
 bird_40_000097.jpg None
 ...
 ```
-我们提供了一个脚本，可以生成这样的数据描述txt。该脚本为Data_process目录下的continuous_image_annotation.py，运行该脚本需要指定数据集路径以及模型一次推理所输入的连续图像帧数：  
+我们提供了一个脚本，可以生成这样的数据描述txt。该脚本为Data_process目录下的continuous_image_annotation.py (脚本continuous_image_annotation_padding.py增加了序列padding, 序列padding就是在视频的开头前和结尾后增加一些全黑的图片，使前几帧和后几帧有输出结果，具体请参考我们的论文)，运行该脚本需要指定数据集路径以及模型一次推理所输入的连续图像帧数：  
 ```
 cd Data_process
 python continuous_image_annotation.py \
@@ -148,7 +149,7 @@ cd ../ #回到项目根目录
 ```
 输出图片在TrainFramework/test_output/目录下。 运行过程中，通过终端输出提示，是否继续测试下一张图像(除按键q外的其他按键)，或者退出测试(按键q)。 
 
-* 测试检测测试集中的视频(注意：待检测视频存放在$data_root_path/val/video/目录下)，红框表示检测结果，绿色框表示GT： 
+* 测试检测测试集中的视频(注意：待检测视频存放在$data_root_path/val/video/目录下)，红框表示检测结果，绿色框表示GT (带有后缀_frames_padding的脚本表示采用序列padding技术，使前几帧和后几帧有输出结果，具体请参考我们的论文)： 
 ```
 cd TrainFramework
 python predict_for_video.py \
@@ -187,10 +188,10 @@ cd ../ #回到项目根目录
 ```
 输出视频在TrainFramework/test_output/目录下。predict_for_video.py和predict_for_video_with_video_full_path.py的区别是，前者检测的数据集中的视频(指定测试集中视频名字即可)，有标签信息，后者是用户指定的视频(需要给全部路径)。
 
-* 模型评价(运行所有测试视频)：
+* 模型评价(运行所有测试视频) (带有后缀_frames_padding的脚本表示采用序列padding技术，使前几帧和后几帧有输出结果，AP会有所提升，具体请参考我们的论文)：
 ```
 cd TrainFramework
-python mAP_for_AllVideo.py \
+python mAP_for_AllVideo_coco_tools.py \
         --model_input_size=384_672 \
         --input_img_num=5 \
         --input_mode=RGB \

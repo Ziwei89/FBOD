@@ -30,7 +30,7 @@ def convert_annotation(annotation_file, list_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_root_path', default="../dataset/FlyingBird/", type=str,
+    parser.add_argument('--data_root_path', default="../dataset/FBD-SV-2024/", type=str,
                         help='data_root_path: The path of the dataset.')
     parser.add_argument('--input_img_num', default=5, type=int,
                         help='input_img_num: The continous video frames, input to the model')
@@ -45,12 +45,12 @@ if __name__ == '__main__':
     list_file_val = open(val_img_label_txt_file, 'w')
     list_files = [list_file_train, list_file_val]
 
-    train_label_path = args.data_root_path + "/train/labels/"
-    val_label_path = args.data_root_path + "/val/labels/"
+    train_label_path = args.data_root_path + "labels/train/"
+    val_label_path = args.data_root_path + "labels/val/"
     label_pathes = [train_label_path, val_label_path]
 
-    train_image_path = args.data_root_path + "/train/images/"
-    val_image_path = args.data_root_path + "/val/images/"
+    train_image_path = args.data_root_path + "images/train/"
+    val_image_path = args.data_root_path + "images/val/"
     image_pathes = [train_image_path, val_image_path]
 
     for list_file, label_path, image_path in zip(list_files, label_pathes, image_pathes):
@@ -63,18 +63,22 @@ if __name__ == '__main__':
             prefix_name = label_file.split(num_str)[0]
 
             num = num-int(args.input_img_num/2)
-            if num < 0:
-                start_num=0
-            else:
-                start_num=num
-            Is_all_continuous_img_exit = True
-            for i in range(start_num, num+args.input_img_num):
-                i_str = "%06d" % int(i)
-                image_name = prefix_name + i_str + args.img_ext
-                if not os.path.exists(image_path + image_name):
-                    Is_all_continuous_img_exit = False
-                    break
-            if Is_all_continuous_img_exit: 
+            Is_needed_continuous_img_exit = True
+            if num < 0: #### The previous image does not exist and needs padding, the image with a sequence number greater than zero must exist.
+                for i in range(0, num+args.input_img_num): ### The 0^th,1^st,..args.input_img_num^th image is needed.
+                    i_str = "%06d" % int(i)
+                    image_name = prefix_name + i_str + args.img_ext
+                    if not os.path.exists(image_path + image_name):
+                        Is_needed_continuous_img_exit = False
+                        break
+            else:   #### If the image at the back doesn't exist and needs padding, the previous image must exist.
+                for i in range(num, num+int(args.input_img_num/2)): ### The num^th,(num+1)^st,..(num+args.input_img_num/2)^th image is needed.
+                    i_str = "%06d" % int(i)
+                    image_name = prefix_name + i_str + args.img_ext
+                    if not os.path.exists(image_path + image_name):
+                        Is_needed_continuous_img_exit = False
+                        break          
+            if Is_needed_continuous_img_exit: 
                 num_str = "%06d" % int(num)  ## Don't consider wether the num is less than 0
                 image_name = prefix_name + num_str + args.img_ext
                 print(image_name)

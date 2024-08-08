@@ -30,7 +30,7 @@ def convert_annotation(annotation_file, list_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_root_path', default="../dataset/FlyingBird/", type=str,
+    parser.add_argument('--data_root_path', default="../dataset/FBD-SV-2024/", type=str,
                         help='data_root_path: The path of the dataset.')
     parser.add_argument('--input_img_num', default=5, type=int,
                         help='input_img_num: The continous video frames, input to the model')
@@ -45,12 +45,12 @@ if __name__ == '__main__':
     list_file_val = open(val_img_label_txt_file, 'w')
     list_files = [list_file_train, list_file_val]
 
-    train_label_path = args.data_root_path + "/train/labels/"
-    val_label_path = args.data_root_path + "/val/labels/"
+    train_label_path = args.data_root_path + "labels/train/"
+    val_label_path = args.data_root_path + "labels/val/"
     label_pathes = [train_label_path, val_label_path]
 
-    train_image_path = args.data_root_path + "/train/images/"
-    val_image_path = args.data_root_path + "/val/images/"
+    train_image_path = args.data_root_path + "images/train/"
+    val_image_path = args.data_root_path + "images/val/"
     image_pathes = [train_image_path, val_image_path]
 
     for list_file, label_path, image_path in zip(list_files, label_pathes, image_pathes):

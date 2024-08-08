@@ -91,8 +91,13 @@ class CustomDataset(Dataset):
             num_str = "%06d" % int(num)
             img_name = first_img_name.split(first_img_num_str)[0] + num_str + ".jpg"
             image_full_name = os.path.join(self.image_path,img_name)
-            image = cv2.imread(image_full_name)
-            images.append(image)
+            if not os.path.exists(image_full_name): ### padding black image
+                h_img, w_img, c = images[0].shape
+                black_image = np.zeros((h_img, w_img, c), np.uint8)
+                images.append(black_image)
+            else:
+                image = cv2.imread(image_full_name)
+                images.append(image)
         if first_img_num < 0: #### black image padding
             black_img_num = abs(first_img_num)
             h_img, w_img, c = images[0].shape
@@ -657,7 +662,7 @@ if __name__ == '__main__':
     input_mode = "RGB"
     continues_num=5
     assign_method="binary_assign"
-    dataset_image_path = "../../../dataset/FlyingBird/train/images/"
+    dataset_image_path = "../../../dataset/FBD-SV-2024/images/train/"
     data = open("./img_label_five_continuous_difficulty_train.txt").readlines()
     #################LOC
 
