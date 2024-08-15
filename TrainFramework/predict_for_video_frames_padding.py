@@ -103,9 +103,8 @@ if __name__ == "__main__":
             image_q.put(image)
             if frame_id >= int(input_img_num/2) + 1 and frame_id <= frame_count:
 
-                ### The output of first stage is start from continus_num-int(continus_num/2) frame.
-                # frame_id_str = "%06d" % int(frame_id-int(continus_num/2))
-                frame_id_str = "%06d" % int((frame_id-1)-int(input_img_num/2)) #The frame id in dataset start from 0, but this script start from 1.
+                ### The output of first stage is start from first frame.
+                frame_id_str = "%06d" % int(frame_id-1) #The frame id in dataset start from 0, but this script start from 1.
                 label_name = video_name.split(".")[0] + "_" + frame_id_str + ".xml"
                 label_bboxes = []
                 if label_name in label_name_list:

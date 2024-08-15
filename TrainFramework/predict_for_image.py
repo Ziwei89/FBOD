@@ -52,7 +52,7 @@ if __name__ == "__main__":
     with open(annotation_path) as f:
         lines = f.readlines()
     for line in lines:
-
+        print(line)
         images, bboxes, _ = load_data(line, dataset_image_path, frame_num=input_img_num)
         raw_image_shape = np.array(images[0].shape[0:2]) # h,w
         # print("raw_image_shape:")

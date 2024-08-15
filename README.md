@@ -68,7 +68,7 @@ bird_40_000097.jpg None
 ```
 cd Data_process
 python continuous_image_annotation.py \
-       --data_root_path=../dataset/FlyingBird/ \
+       --data_root_path=../dataset/FBD-SV-2024/ \
        --input_img_num=5
 cd ../ #回到项目根目录
 ```
@@ -119,7 +119,7 @@ python train_AP50.py \
         --assign_method=auto_assign \
         --pretrain_model_path=logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_ga_20230822/FB_object_detect_model.pth \
         --Batch_size=8 \
-        --data_root_path=../dataset/FlyingBird/ \
+        --data_root_path=../dataset/FBD-SV-2024/ \
         --data_augmentation=True \
         --Add_name=20230822
 cd ../ #回到项目根目录
@@ -142,7 +142,7 @@ python predict_for_image.py \
         --fusion_method=concat \
         --scale_factor=80 \
         --assign_method=auto_assign \
-        --data_root_path=../dataset/FlyingBird/ \
+        --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
         --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
 cd ../ #回到项目根目录
@@ -161,7 +161,7 @@ python predict_for_video.py \
         --fusion_method=concat \
         --scale_factor=80 \
         --assign_method=auto_assign \
-        --data_root_path=../dataset/FlyingBird/ \
+        --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
         --model_name=FB_object_detect_model.pth \
         --video_name=bird_2.mp4
@@ -200,7 +200,7 @@ python mAP_for_AllVideo_coco_tools.py \
         --fusion_method=concat \
         --scale_factor=80 \
         --assign_method=auto_assign \
-        --data_root_path=../dataset/FlyingBird/ \
+        --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
         --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
 cd ../ #回到项目根目录
@@ -217,7 +217,7 @@ python mAP_for_video.py \
         --fusion_method=concat \
         --scale_factor=80 \
         --assign_method=auto_assign \
-        --data_root_path=../dataset/FlyingBird/ \
+        --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
         --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth \
         --video_name=bird_2.mp4
