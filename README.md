@@ -34,7 +34,17 @@
 ```
 git clone https://github.com/Ziwei89/FBOD.git
 ```
-## 2、准备训练和测试数据
+## 2、项目主要环境（作者运行时主要环境）
+ubuntu  
+python=3.10.6  
+numpy=1.23.4  
+pytorch=1.11.0=py3.10_cuda11.3_cudnn8.2.0_0  
+python-opencv=4.6.0  
+tqdm=4.64.1  
+imgaug=0.4.0  
+matplotlib=3.6.2  
+
+## 3、准备训练和测试数据
 **<font color=red>注意：</font> 后续运行脚本前，初始工作位置默认在项目根目录(FBOD/)**
 
 可以使用labelImg对图片进行标注，得到xml文件。  
@@ -99,7 +109,7 @@ python shuffle_txt_lines.py \
 bird
 ```
 
-## 3、训练飞鸟目标检测模型
+## 4、训练飞鸟目标检测模型
 在模型训练时，需要使用命令行参数形式进行传参。所有可设置参数均定义在TrainFramework/config/opts.py文件中(包括训练和测试所需要的参数)，这些参数均有默认值，可以不设置。  
 部分参数解释如下(其他参数较为通用，在设置时请参考TrainFramework/config/opts.py文件)：  
 ```
@@ -138,7 +148,7 @@ python train_AP50.py \
 ```
 训练时，程序将在TrainFramework/目录下创建一个logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/的目录，该目录会保存一些训练模型。同时，会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_loss.jpg的图像用于记录训练过程的loss，训练到30个epoch后，还会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_ap50.jpg的图像用于记录后续模型的AP50性能指标。  
 
-## 4、测试和评价飞鸟目标检测模型
+## 5、测试和评价飞鸟目标检测模型
 在运行测试和评价脚本时，要保持命令行参数与训练时一致(不用包括训练特有的如Batch_size等参数，需要特别增加模型名字的参数(因为保存模型的文件夹下有多个模型))，否则脚本将报无法找到模型的错误。
 几个与上述训练对应的例子(均是运行测试集中的数据)：
 
