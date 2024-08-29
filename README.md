@@ -12,7 +12,21 @@
 **<font color=red>注意：</font>论文中使用的数据集(监控视频飞鸟目标数据)，部分不能公开。我们已经采集可以公开的数据FBD-SV-2024，将于近期公布。敬请期待！**
 
 本项目是该论文实现代码。本项目模型输入是连续n帧图像(以连续5帧为例)，预测飞鸟目标在中间帧的边界框信息(如果n=1, 则预测飞鸟目标在当前帧的边界框信息)  
-<font color=red>注意：</font>项目中少量代码来源于其他工程或互联网，在此鸣谢。若需要特别指明或存在权力要求，请联系sun_zi_wei@my.swjtu.edu.cn。本项目可以用于学习和科研，不可用于商业行为。
+<font color=red>注意：</font>项目中少量代码来源于其他工程或互联网，在此鸣谢。若需要特别指明或存在权力要求，请联系sun_zi_wei@my.swjtu.edu.cn。本项目可以用于学习和科研，不可用于商业行为。  
+
+<font color=red>如果我们的工作对您有用，请引用我们的文章：</font>
+```
+@ARTICLE{2024_FBOD-SV,
+  author={Sun, Zi-Wei and Hua, Ze-Xi and Li, Heng-Chao and Li, Yan},
+  journal={IEEE Transactions on Instrumentation and Measurement}, 
+  title={A Flying Bird Object Detection Method for Surveillance Video}, 
+  year={2024},
+  volume={73},
+  number={},
+  pages={1-14},
+  doi={10.1109/TIM.2024.3435183}}
+```
+
 
 # 项目应用步骤
 
@@ -21,6 +35,7 @@
 git clone https://github.com/Ziwei89/FBOD.git
 ```
 ## 2、准备训练和测试数据
+**<font color=red>注意：</font> 后续运行脚本前，初始工作位置默认在项目根目录(FBOD/)**
 
 可以使用labelImg对图片进行标注，得到xml文件。  
 标签文件中应包含目标边界框、目标类别以及目标的难度信息(在以后的项目中会用到目标的难度信息，在本项目中标注时不用考虑，相关代码会设置一个用不到的默认值)
@@ -66,18 +81,16 @@ bird_40_000097.jpg None
 ```
 我们提供了一个脚本，可以生成这样的数据描述txt。该脚本为Data_process目录下的continuous_image_annotation.py (脚本continuous_image_annotation_frames_padding.py增加了序列padding, 序列padding就是在视频的开头前和结尾后增加一些全黑的图片，使前几帧和后几帧有输出结果，具体请参考我们的论文)，运行该脚本需要指定数据集路径以及模型一次推理所输入的连续图像帧数：  
 ```
-cd Data_process
+cd Data_process #从项目根目录进入数据处理目录
 python continuous_image_annotation.py \
        --data_root_path=../dataset/FBD-SV-2024/ \
        --input_img_num=5
-cd ../ #回到项目根目录
 ```
 运行该脚本后，将在TrainFramework/dataloader/目录下生成两个txt文件，分别是img_label_five_continuous_difficulty_train_raw.txt和img_label_five_continuous_difficulty_val_raw.txt文件。这两个文件中的训练样本排列是顺序的，最好通过运行以下脚本将其打乱：  
 ```
-cd TrainFramework/dataloader/
+cd TrainFramework/dataloader/ #从项目根目录进入训练框架下dataloader目录
 python shuffle_txt_lines.py \
        --input_img_num=5
-cd ../../ #回到项目根目录
 ```
 运行该脚本后，将在TrainFramework/dataloader/目录下生成img_label_five_continuous_difficulty_train.txt和img_label_five_continuous_difficulty_val.txt两个文件。
 ### (3) 准备类别txt文件
@@ -92,7 +105,7 @@ bird
 ```
 input_img_num                      #一次输入模型中，连续视频图像的帧数
 input_mode                         #输入视频帧图像的颜色模式，提供两种模式，一种是所有帧均为RGB，另一种仅仅中间帧为RGB，而其他帧为灰度图像
-aggregation_method                 #连续n帧图像特征聚合方式
+aggregation_method                 #连续n帧图像特征聚合方式, 有三种方式可选：relatedatten，multiinput和convlstm。其中relatedatten表示相关注意力聚合，multiinput表示多帧concat后输入，convlstm表示利用convlstm方式聚合
 aggregation_output_channels        #连续n帧视频图像经过特征聚合后输出的通道数(可以根据输入连续帧数适当进行调整)
 fusion_method                      #浅层特征层和深层特征层融合方式
 assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimOTA-OC(auto_assign, aa)
@@ -107,9 +120,9 @@ start_Epoch                        #起始训练Epoch，一般用在加载训练
 含有“multi_scale”的训练脚本表示训练的模型输出是多尺度的(3个尺度)。有“_with_absolute_path”后缀的训练脚本表示训练时，标签描述脚本中，图像指定绝对路径。
 训练的一个例子:  
 ```
-cd TrainFramework
+cd TrainFramework #从项目根目录进入训练框架
 python train_AP50.py \
-        --model_input_size=384_672 \
+        --model_input_size=384_672 \ # 模型输入图像尺寸，h_w
         --input_img_num=5 \
         --input_mode=RGB \
         --aggregation_method=relatedatten \
@@ -122,7 +135,6 @@ python train_AP50.py \
         --data_root_path=../dataset/FBD-SV-2024/ \
         --data_augmentation=True \
         --Add_name=20230822
-cd ../ #回到项目根目录
 ```
 训练时，程序将在TrainFramework/目录下创建一个logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/的目录，该目录会保存一些训练模型。同时，会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_loss.jpg的图像用于记录训练过程的loss，训练到30个epoch后，还会创建一张train_output_img/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_ap50.jpg的图像用于记录后续模型的AP50性能指标。  
 
@@ -132,7 +144,7 @@ cd ../ #回到项目根目录
 
 * 测试检测测试集中的图片(连续n帧图片输入)，红框表示检测结果，绿色框表示GT：  
 ```
-cd TrainFramework
+cd TrainFramework #从项目根目录进入训练框架
 python predict_for_image.py \
         --model_input_size=384_672 \
         --input_img_num=5 \
@@ -144,14 +156,13 @@ python predict_for_image.py \
         --assign_method=auto_assign \
         --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
-        --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
-cd ../ #回到项目根目录
+        --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pthc
 ```
 输出图片在TrainFramework/test_output/目录下。 运行过程中，通过终端输出提示，是否继续测试下一张图像(除按键q外的其他按键)，或者退出测试(按键q)。 
 
-* 测试检测测试集中的视频(注意：待检测视频存放在$data_root_path/val/video/目录下)，红框表示检测结果，绿色框表示GT (带有后缀_frames_padding的脚本表示采用序列padding技术，使前几帧和后几帧有输出结果，具体请参考我们的论文)： 
+* 测试检测测试集中的视频(注意：待检测视频存放在$data_root_path/videos/val/目录下)，红框表示检测结果，绿色框表示GT (带有后缀_frames_padding的脚本表示采用序列padding技术，使前几帧和后几帧有输出结果，具体请参考我们的论文)： 
 ```
-cd TrainFramework
+cd TrainFramework #从项目根目录进入训练框架
 python predict_for_video.py \
         --model_input_size=384_672 \
         --input_img_num=5 \
@@ -165,13 +176,12 @@ python predict_for_video.py \
         --Add_name=20230822 \
         --model_name=FB_object_detect_model.pth \
         --video_name=bird_2.mp4
-cd ../ #回到项目根目录
 ```
 输出视频在TrainFramework/test_output/目录下。 
 
 * 测试检测给定的视频(注意：需要给视频的全路径)，红框表示检测结果： 
 ```
-cd TrainFramework
+cd TrainFramework #从项目根目录进入训练框架
 python predict_for_video_with_video_full_path.py \
         --model_input_size=384_672 \
         --input_img_num=5 \
@@ -184,13 +194,12 @@ python predict_for_video_with_video_full_path.py \
         --Add_name=20230822 \
         --model_name=FB_object_detect_model.pth \
         --video_full_path=./test.mp4
-cd ../ #回到项目根目录
 ```
 输出视频在TrainFramework/test_output/目录下。predict_for_video.py和predict_for_video_with_video_full_path.py的区别是，前者检测的数据集中的视频(指定测试集中视频名字即可)，有标签信息，后者是用户指定的视频(需要给全部路径)。
 
 * 模型评价(运行所有测试视频) (带有后缀_frames_padding的脚本表示采用序列padding技术，使前几帧和后几帧有输出结果，AP会有所提升，具体请参考我们的论文)：
 ```
-cd TrainFramework
+cd TrainFramework #从项目根目录进入训练框架
 python mAP_for_AllVideo_coco_tools.py \
         --model_input_size=384_672 \
         --input_img_num=5 \
@@ -203,11 +212,10 @@ python mAP_for_AllVideo_coco_tools.py \
         --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
         --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
-cd ../ #回到项目根目录
 ```
-* 模型评价(运行单个视频)：
+* 模型评价(运行单个视频，测试集目录下的视频)：
 ```
-cd TrainFramework
+cd TrainFramework #从项目根目录进入训练框架
 python mAP_for_video.py \
         --model_input_size=384_672 \
         --input_img_num=5 \
@@ -220,6 +228,21 @@ python mAP_for_video.py \
         --data_root_path=../dataset/FBD-SV-2024/ \
         --Add_name=20230822 \
         --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth \
-        --video_name=bird_2.mp4
-cd ../ #回到项目根目录
+        --video_name=bird_7.mp4
+```
+* 统计模型的检测信息(统计测试集的检测效果，打印输出所有实例个数(total_bbox)、正确的检测数量(True_detection)、漏检的数量(False_background)以及误检数量(False_detection))：  
+```
+cd TrainFramework #从项目根目录进入训练框架
+python count_detection_info.py \
+        --model_input_size=384_672 \
+        --input_img_num=5 \
+        --input_mode=RGB \
+        --aggregation_method=relatedatten \
+        --backbone_name=cspdarknet53 \
+        --fusion_method=concat \
+        --scale_factor=80 \
+        --assign_method=auto_assign \
+        --data_root_path=../dataset/FBD-SV-2024/ \
+        --Add_name=20230822 \
+        --model_name=Epoch80-Total_Loss6.4944-Val_Loss16.7809-AP_50_0.7611.pth
 ```
