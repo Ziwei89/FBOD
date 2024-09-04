@@ -8,7 +8,7 @@ class opts(object):
                             help='model_input_size: The model input shape h_w')
         
         self.parser.add_argument('--input_img_num', default=5, type=int,
-                            help='input_img_num: The continous video frames, input to the model')
+                            help='input_img_num: Number of consecutive video frames fed to the model at one time')
         
         self.parser.add_argument('--input_mode', default="GRG", type=str,
                             help='input_mode: "RGB" or "GRG". "RGB": mean RGB ..RGB, "GRG": mean GRAY ..RGB.. GRAY')

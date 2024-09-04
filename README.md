@@ -1,3 +1,4 @@
+[English](README_ENG.md)  
 # FBOD-SV
 [A Flying Bird Object Detection method for Surveillance Video ](https://ieeexplore.ieee.org/document/10614237)
 基于监控视频飞鸟特点的监控视频飞鸟目标检测方法  
@@ -113,12 +114,12 @@ bird
 在模型训练时，需要使用命令行参数形式进行传参。所有可设置参数均定义在TrainFramework/config/opts.py文件中(包括训练和测试所需要的参数)，这些参数均有默认值，可以不设置。  
 部分参数解释如下(其他参数较为通用，在设置时请参考TrainFramework/config/opts.py文件)：  
 ```
-input_img_num                      #一次输入模型中，连续视频图像的帧数
-input_mode                         #输入视频帧图像的颜色模式，提供两种模式，一种是所有帧均为RGB，另一种仅仅中间帧为RGB，而其他帧为灰度图像
+input_img_num                      #一次输入到模型的连续视频帧数
+input_mode                         #输入视频帧图像的颜色模式，提供两种模式供选择：RGB, GRG。一种是所有帧均为RGB，另一种仅仅中间帧为RGB，而其他帧为灰度图像
 aggregation_method                 #连续n帧图像特征聚合方式, 有三种方式可选：relatedatten，multiinput和convlstm。其中relatedatten表示相关注意力聚合，multiinput表示多帧concat后输入，convlstm表示利用convlstm方式聚合
 aggregation_output_channels        #连续n帧视频图像经过特征聚合后输出的通道数(可以根据输入连续帧数适当进行调整)
 fusion_method                      #浅层特征层和深层特征层融合方式
-assign_method                      #标签分配方式，项目提供3种方式，和收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimOTA-OC(auto_assign, aa)
+assign_method                      #标签分配方式，项目提供3种方式，收缩边界框(binary_assign, ba)、中心高斯(guassian_assign, ga)、SimOTA-OC(auto_assign, aa)
 scale_factor                       #单尺度输出模型，目标尺度归一化因子，用于将目标的坐标数据归一化到一个较小的范围
 scale_min_max_list                 #多尺度(3个尺度)输出模型，目标尺度最大最小数列。统计目标尺度范围，将其划分为大尺度、中等尺度、小尺度目标，分别记录其最大最小尺寸。用于将目标的坐标数据归一化到一个较小的范围
 pretrain_model_path                #预训练模型的路径。在使用auto_assign标签分配方式时，先采用静态的标签分配方式进行预训练，会取得更好的效果
