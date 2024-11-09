@@ -147,7 +147,7 @@ python train_AP50.py \
         --data_augmentation=True \
         --Add_name=20230822
 ```
-During training, the program will create a directory logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/ inside the TrainFramework/ directory that will hold some of the trained models. Also, a train_output_img/ fiver /384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_loss.jpg image is created to record the loss during the training process. After training for 30 epochs, A train_output_img/ fiver /384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822_ap50.jpg image is also created to record the AP50 performance metrics for subsequent models.  
+During training, the program will create a directory logs/five/384_672/RGB_relatedatten_cspdarknet53_concat_aa_20230822/ inside the TrainFramework/ directory that will hold some of the trained models. Also, a loss.jpg image will be created in this directory to record the loss during training, and an AP50.jpg image will be created after 30 epochs to record the ap50 performance metrics of subsequent models.  
 
 ## 5. Testing and evaluating the flying bird object detection model
 When running the test and evaluation scripts, make sure that the command-line arguments are the same as those used during training (you don't need to include training-specific arguments such as Batch_size; you need to specifically add arguments for the model name (because there are multiple models in the model folder)), or the script will fail to find the model.  
