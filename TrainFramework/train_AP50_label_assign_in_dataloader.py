@@ -208,12 +208,24 @@ if __name__ == "__main__":
     os.makedirs(save_model_dir, exist_ok=True)
 
     ############### For log figure ################
-    log_pic_name_loss = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_" + opt.Add_name + "_loss" + ".jpg"
-    log_pic_name_ap50 = "train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" +opt.model_input_size + "/" + opt.input_mode + "_" + opt.aggregation_method \
-                                            + "_" + opt.backbone_name + "_" + opt.fusion_method + "_" + abbr_assign_method + "_" + opt.Add_name + "_ap50" + ".jpg"
-    os.makedirs("train_output_img/" + num_to_english_c_dic[opt.input_img_num] + "/" + opt.model_input_size + "/", exist_ok=True)
+    log_pic_name_loss = save_model_dir + "loss.jpg"
+    log_pic_name_ap50 = save_model_dir + "ap50.jpg"
     ################################################
+    config_txt = save_model_dir + "config.txt"
+    if os.path.exists(config_txt):
+        pass
+    else:
+        config_txt_file = open(config_txt, 'w')
+        config_txt_file.write("Input mode: " + opt.input_mode + "\n")
+        config_txt_file.write("Data root path: " + opt.data_root_path + "\n")
+        config_txt_file.write("Aggregation method: " + opt.aggregation_method + "\n")
+        config_txt_file.write("Backbone name: " + opt.backbone_name + "\n")
+        config_txt_file.write("Fusion method: " + opt.fusion_method + "\n")
+        config_txt_file.write("Assign method: " + opt.assign_method + "\n")
+        config_txt_file.write("Scale factor: " + str(opt.scale_factor) + "\n")
+        config_txt_file.write("Batch size: " + str(opt.Batch_size) + "\n")
+        config_txt_file.write("Data augmentation: " + str(opt.data_augmentation) + "\n")
+        config_txt_file.write("Learn rate: " + str(opt.lr) + "\n")
 
     #-------------------------------#
     #-------------------------------#
