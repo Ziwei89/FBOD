@@ -133,7 +133,7 @@ An example of training:
 ```
 cd TrainFramework # Go to the training framewrok from the project root
 python train_AP50.py \
-        --model_input_size=384_672 \ # Model input image size，h_w
+        --model_input_size=384_672 \ # Model input image size，h_w. Please note that the underline "_" in the middle cannot be replaced by "," !!!
         --input_img_num=5 \
         --input_mode=RGB \
         --aggregation_method=relatedatten \

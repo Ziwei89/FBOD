@@ -10,7 +10,7 @@ class opts(object):
         self.parser.add_argument('--input_img_num', default=5, type=int,
                             help='input_img_num: Number of consecutive video frames fed to the model at one time')
         
-        self.parser.add_argument('--input_mode', default="GRG", type=str,
+        self.parser.add_argument('--input_mode', default="RGB", type=str,
                             help='input_mode: "RGB" or "GRG". "RGB": mean RGB ..RGB, "GRG": mean GRAY ..RGB.. GRAY')
         
         self.parser.add_argument('--aggregation_method', default='multiinput', type=str,
@@ -45,7 +45,7 @@ class opts(object):
         self.parser.add_argument('--Batch_size', default=8, type=int,
                             help='Batch_size: The size of batch.')
         
-        self.parser.add_argument('--data_augmentation', default=False, type=bool,
+        self.parser.add_argument('--data_augmentation', default=True, type=bool,
                             help='data_augmentation: Determin whether to augmentate the dataset.')
         
         self.parser.add_argument('--pretrain_model_path', default="logs/non.pth", type=str,
