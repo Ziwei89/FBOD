@@ -133,7 +133,7 @@ start_Epoch                        #起始训练Epoch，一般用在加载训练
 ```
 cd TrainFramework #从项目根目录进入训练框架
 python train_AP50.py \
-        --model_input_size=384_672 \ # 模型输入图像尺寸，h_w
+        --model_input_size=384_672 \ # 模型输入图像尺寸，h_w。请注意中间的下划线"_"，不能用","代替！！！
         --input_img_num=5 \
         --input_mode=RGB \
         --aggregation_method=relatedatten \
